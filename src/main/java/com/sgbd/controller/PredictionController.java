@@ -8,8 +8,10 @@ import com.sgbd.service.WeatherImporterService;
 import com.sgbd.service.prediction.AccuracyService;
 import com.sgbd.service.prediction.AccuracySummary;
 import com.sgbd.service.prediction.PredictionEngineService;
+import com.sgbd.service.ExportService;
 import com.sgbd.util.AnimationUtil;
 import com.sgbd.util.ColorUtil;
+import javafx.stage.FileChooser;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -26,8 +28,12 @@ import javafx.scene.paint.Color;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import com.sgbd.service.WeatherApiService;
 
 /**
  * Controller pentru tab-ul de predictii probabilistice.
@@ -39,6 +45,10 @@ public class PredictionController {
     private final ForecastService forecastService = new ForecastService();
     private final PredictionEngineService predictionEngine = new PredictionEngineService();
     private final AccuracyService accuracyService = new AccuracyService();
+    private final ExportService exportService = new ExportService();
+    private List<PredictionEngineService.MonteCarloResult> lastMonteCarloResults;
+    private City lastCity;
+    private Button exportBtn;
 
     private ComboBox<City> cityCombo;
     private DatePicker datePicker;
@@ -50,6 +60,7 @@ public class PredictionController {
     private Label spreadLabel;
     private TableView<ForecastRow> predictionTable;
     private Label accuracyBadge;
+    private Label offlineBadge;
 
     public Node getView() {
         VBox root = new VBox(12);
@@ -79,6 +90,10 @@ public class PredictionController {
         Button accuracyBtn = new Button("📊 Vizualizează acuratețe");
         accuracyBtn.getStyleClass().addAll("button", "secondary");
 
+        exportBtn = new Button("Export JSON");
+        exportBtn.getStyleClass().addAll("button", "secondary");
+        exportBtn.setDisable(true);
+
         loadingIndicator = new ProgressIndicator();
         loadingIndicator.setVisible(false);
         loadingIndicator.setPrefSize(24, 24);
@@ -88,11 +103,16 @@ public class PredictionController {
         accuracyBadge.setManaged(false);
         accuracyBadge.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 4px 10px; -fx-background-radius: 12px;");
 
+        offlineBadge = new Label();
+        offlineBadge.setVisible(false);
+        offlineBadge.setManaged(false);
+        offlineBadge.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #f97316; -fx-padding: 4px 10px; -fx-background-radius: 12px; -fx-background-color: rgba(249, 115, 22, 0.15);");
+
         filters.getChildren().addAll(
             new Label("Oraș:"), cityCombo, accuracyBadge,
             new Label("De la:"), datePicker,
             new Label("Zile:"), daysCombo,
-            mcBtn, apiBtn, accuracyBtn, loadingIndicator
+            mcBtn, apiBtn, accuracyBtn, exportBtn, offlineBadge, loadingIndicator
         );
 
         statusLabel = new Label("Selectează un oraș pentru a genera predicția");
@@ -128,9 +148,11 @@ public class PredictionController {
         root.getChildren().addAll(filters, statusLabel, chart, probabilityCardsBox, spreadLabel, predictionTable);
 
         loadCities();
+        updateOfflineBadge();
         mcBtn.setOnAction(e -> runMonteCarloPrediction());
         apiBtn.setOnAction(e -> runApiPrediction());
         accuracyBtn.setOnAction(e -> showAccuracyAlert());
+        exportBtn.setOnAction(e -> exportPredictions());
 
         return root;
     }
@@ -176,9 +198,34 @@ public class PredictionController {
         try {
             List<City> cities = cityService.getAllCities();
             cityCombo.setItems(FXCollections.observableArrayList(cities));
-            cityCombo.setOnAction(e -> loadAccuracyForSelectedCity());
+            cityCombo.setOnAction(e -> {
+                loadAccuracyForSelectedCity();
+                updateOfflineBadge();
+            });
         } catch (SQLException e) {
             statusLabel.setText("Eroare la încărcarea orașelor: " + e.getMessage());
+        }
+    }
+
+    private void updateOfflineBadge() {
+        boolean apiUnavailable = !WeatherApiService.isApiAvailable();
+        boolean staleData = false;
+        try {
+            LocalDateTime lastFetch = forecastService.getLastForecastFetchTime();
+            if (lastFetch == null || ChronoUnit.HOURS.between(lastFetch, LocalDateTime.now()) > 6) {
+                staleData = true;
+            }
+        } catch (SQLException e) {
+            staleData = true;
+        }
+
+        if (apiUnavailable || staleData) {
+            offlineBadge.setText("⚠ Prognoza poate fi veche");
+            offlineBadge.setVisible(true);
+            offlineBadge.setManaged(true);
+        } else {
+            offlineBadge.setVisible(false);
+            offlineBadge.setManaged(false);
         }
     }
 
@@ -342,6 +389,9 @@ public class PredictionController {
 
     @SuppressWarnings("unchecked")
     private void showMonteCarloResults(List<PredictionEngineService.MonteCarloResult> results, String cityName) {
+        lastMonteCarloResults = results;
+        lastCity = cityCombo.getValue();
+        exportBtn.setDisable(false);
         chart.getData().clear();
         predictionTable.getItems().clear();
         probabilityCardsBox.getChildren().clear();
@@ -413,6 +463,8 @@ public class PredictionController {
 
     @SuppressWarnings("unchecked")
     private void showApiPredictions(List<Forecast> predictions, String cityName) {
+        lastMonteCarloResults = null;
+        exportBtn.setDisable(true);
         chart.getData().clear();
         predictionTable.getItems().clear();
         probabilityCardsBox.getChildren().clear();
@@ -470,6 +522,25 @@ public class PredictionController {
         AnimationUtil.bounce(card, 400);
 
         return card;
+    }
+
+    private void exportPredictions() {
+        if (lastCity == null || lastMonteCarloResults == null || lastMonteCarloResults.isEmpty()) {
+            statusLabel.setText("⚠ Nu există predicții de exportat!");
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export JSON predicții");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON", "*.json"));
+        chooser.setInitialFileName("predictii_" + lastCity.getName().replaceAll("\\s+", "_") + "_" + java.time.LocalDate.now() + ".json");
+        java.io.File file = chooser.showSaveDialog(null);
+        if (file == null) return;
+        try {
+            exportService.exportPredictionsToJson(lastCity, lastMonteCarloResults, file.toPath());
+            statusLabel.setText("✅ Exportat la: " + file.getAbsolutePath());
+        } catch (Exception ex) {
+            statusLabel.setText("Eroare export: " + ex.getMessage());
+        }
     }
 
     /**

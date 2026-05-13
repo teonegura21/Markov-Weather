@@ -4,7 +4,9 @@ import com.sgbd.model.City;
 import com.sgbd.model.CityRanking;
 import com.sgbd.model.Country;
 import com.sgbd.service.CityService;
+import com.sgbd.service.ExportService;
 import com.sgbd.service.StatisticsService;
+import javafx.stage.FileChooser;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -19,6 +21,8 @@ import java.util.List;
 public class RankingsController {
     private final CityService cityService = new CityService();
     private final StatisticsService statsService = new StatisticsService();
+    private final ExportService exportService = new ExportService();
+    private Button exportBtn;
 
     private ComboBox<String> criterionCombo;
     private ComboBox<City> cityCombo;
@@ -37,10 +41,13 @@ public class RankingsController {
         Button rankBtn = new Button("Clasament");
         Button similarBtn = new Button("Orașe similare");
 
+        exportBtn = new Button("Export CSV");
+        exportBtn.getStyleClass().addAll("button", "secondary");
+
         filters.getChildren().addAll(
             new Label("Clasament după:"), criterionCombo,
             new Label("Oraș referință (similare):"), cityCombo,
-            rankBtn, similarBtn);
+            rankBtn, similarBtn, exportBtn);
 
         TitledPane rankPane = new TitledPane();
         rankPane.setText("Clasament orașe");
@@ -59,6 +66,7 @@ public class RankingsController {
         loadAllCities();
         rankBtn.setOnAction(e -> loadRankings());
         similarBtn.setOnAction(e -> loadSimilar());
+        exportBtn.setOnAction(e -> exportRankings());
 
         return root;
     }
@@ -124,6 +132,26 @@ public class RankingsController {
             similarTable.setItems(FXCollections.observableArrayList(similar));
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, "Eroare: " + e.getMessage()).showAndWait();
+        }
+    }
+
+    private void exportRankings() {
+        List<CityRanking> items = rankingTable.getItems();
+        if (items == null || items.isEmpty()) {
+            new Alert(Alert.AlertType.WARNING, "Nu există clasamente de exportat!").showAndWait();
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export CSV clasamente");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
+        chooser.setInitialFileName("clasamente_" + java.time.LocalDate.now() + ".csv");
+        java.io.File file = chooser.showSaveDialog(null);
+        if (file == null) return;
+        try {
+            exportService.exportCityRankingsToCsv(items, file.toPath());
+            new Alert(Alert.AlertType.INFORMATION, "✅ Exportat la: " + file.getAbsolutePath()).showAndWait();
+        } catch (Exception ex) {
+            new Alert(Alert.AlertType.ERROR, "Eroare export: " + ex.getMessage()).showAndWait();
         }
     }
 }

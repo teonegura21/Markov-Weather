@@ -5,6 +5,7 @@ import com.sgbd.model.City;
 import com.sgbd.model.Forecast;
 import com.sgbd.service.CityService;
 import com.sgbd.service.StatisticsService;
+import com.sgbd.util.ValidationUtil;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -123,9 +124,15 @@ public class StatsController {
 
         int year;
         try {
-            year = Integer.parseInt(yearField.getText());
+            year = Integer.parseInt(yearField.getText().trim());
         } catch (NumberFormatException e) {
             new Alert(Alert.AlertType.ERROR, "Anul trebuie să fie un număr valid.").showAndWait();
+            return;
+        }
+
+        String err = ValidationUtil.validateRange(year, 1900, LocalDate.now().getYear() + 1, "Anul");
+        if (err != null) {
+            new Alert(Alert.AlertType.ERROR, err).showAndWait();
             return;
         }
 

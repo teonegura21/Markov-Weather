@@ -4,6 +4,7 @@ import com.sgbd.service.DataPopulationService;
 import com.sgbd.service.ForecastService;
 import com.sgbd.service.WeatherImporterService;
 import com.sgbd.service.prediction.StartupOrchestratorService;
+import com.sgbd.util.DatabaseConnectionPool;
 import com.sgbd.util.DatabaseInitializer;
 
 import javafx.application.Application;
@@ -35,10 +36,14 @@ public class MainApp extends Application {
         primaryStage.setMinWidth(1000);
         primaryStage.setMinHeight(700);
 
-        // Inițializare bază de date
-        boolean dbReady = DatabaseInitializer.initialize();
+        // Inițializare pool de conexiuni cu retry
+        statusLabel.setText("🔄 Se conectează la PostgreSQL...");
+        boolean dbReady = DatabaseConnectionPool.initialize();
         if (!dbReady) {
             showDbErrorDialog();
+        } else {
+            // Inițializare schema, seed-uri, proceduri
+            dbReady = DatabaseInitializer.initialize();
         }
 
         TabPane tabPane = new TabPane();
@@ -112,14 +117,29 @@ public class MainApp extends Application {
 
         Label dbStatusLabel = new Label();
         dbStatusLabel.setStyle("-fx-font-size: 11px;");
-        if (dbReady) {
-            boolean populated = DatabaseInitializer.isDatabasePopulated();
-            dbStatusLabel.setText(populated ? "DB: ✅" : "DB: ❌");
-        } else {
-            dbStatusLabel.setText("DB: ❌");
-        }
 
-        statusBar.getChildren().addAll(statusLabel, dbStatusLabel);
+        // Indicator healthcheck DB (punct colorat)
+        javafx.scene.shape.Circle dbHealthDot = new javafx.scene.shape.Circle(5);
+        dbHealthDot.setStyle("-fx-fill: #22c55e;");
+        final boolean dbReadyFinal = dbReady;
+        javafx.animation.KeyFrame healthFrame = new javafx.animation.KeyFrame(
+            javafx.util.Duration.seconds(5),
+            e -> {
+                boolean healthy = DatabaseConnectionPool.isHealthy();
+                dbHealthDot.setStyle(healthy ? "-fx-fill: #22c55e;" : "-fx-fill: #ef4444;");
+                if (dbReadyFinal) {
+                    boolean populated = DatabaseInitializer.isDatabasePopulated();
+                    dbStatusLabel.setText(populated ? "DB: ✅" : "DB: ❌");
+                } else {
+                    dbStatusLabel.setText("DB: ❌");
+                }
+            }
+        );
+        javafx.animation.Timeline healthTimeline = new javafx.animation.Timeline(healthFrame);
+        healthTimeline.setCycleCount(javafx.animation.Timeline.INDEFINITE);
+        healthTimeline.play();
+
+        statusBar.getChildren().addAll(statusLabel, dbHealthDot, dbStatusLabel);
 
         VBox.setVgrow(tabPane, Priority.ALWAYS);
 
@@ -147,6 +167,12 @@ public class MainApp extends Application {
 
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        // Shutdown graceful: inchide pool-ul la iesire
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Aplicatia se inchide — eliberez resursele...");
+            DatabaseConnectionPool.shutdown();
+        }));
 
         // Confirmare la închidere dacă există operații în fundal
         primaryStage.setOnCloseRequest(event -> {

@@ -2,9 +2,11 @@ package com.sgbd.controller;
 
 import com.sgbd.model.City;
 import com.sgbd.service.CityService;
+import com.sgbd.service.ExportService;
 import com.sgbd.service.prediction.AccuracyService;
 import com.sgbd.service.prediction.ReinforcementService;
 import com.sgbd.util.AnimationUtil;
+import javafx.stage.FileChooser;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -41,6 +43,10 @@ public class AccuracyController {
     private final CityService cityService = new CityService();
     private final AccuracyService accuracyService = new AccuracyService();
     private final ReinforcementService reinforcementService = new ReinforcementService();
+    private final ExportService exportService = new ExportService();
+    private List<com.sgbd.service.prediction.AccuracyMetrics> lastBacktestResults;
+    private Button exportCsvBtn;
+    private Button exportJsonBtn;
 
     private ComboBox<City> cityCombo;
     private ComboBox<Integer> daysBackCombo;
@@ -97,6 +103,14 @@ public class AccuracyController {
         Button backtestBtn = new Button("Rulează backtest");
         backtestBtn.getStyleClass().addAll("button");
 
+        exportCsvBtn = new Button("Export CSV");
+        exportCsvBtn.getStyleClass().addAll("button", "secondary");
+        exportCsvBtn.setDisable(true);
+
+        exportJsonBtn = new Button("Export JSON");
+        exportJsonBtn.getStyleClass().addAll("button", "secondary");
+        exportJsonBtn.setDisable(true);
+
         Button learnBtn = new Button("Învață din erori");
         learnBtn.getStyleClass().addAll("button", "secondary");
 
@@ -108,7 +122,7 @@ public class AccuracyController {
             new Label("Oraș:"), cityCombo,
             new Label("Zile înapoi:"), daysBackCombo,
             new Label("Orizont max:"), horizonCombo,
-            backtestBtn, learnBtn, loadingIndicator
+            backtestBtn, exportCsvBtn, exportJsonBtn, learnBtn, loadingIndicator
         );
 
         // ==================== Status ====================
@@ -203,6 +217,8 @@ public class AccuracyController {
         loadCities();
         backtestBtn.setOnAction(e -> runBacktest());
         learnBtn.setOnAction(e -> runLearning());
+        exportCsvBtn.setOnAction(e -> exportAccuracyCsv());
+        exportJsonBtn.setOnAction(e -> exportAccuracyJson());
 
         return root;
     }
@@ -379,8 +395,10 @@ public class AccuracyController {
                 List<com.sgbd.service.prediction.AccuracyMetrics> realResults =
                     accuracyService.runBacktest(city.getId(), daysBack, maxHorizon);
 
+                lastBacktestResults = realResults;
                 List<AccuracyMetrics> results;
-                if (realResults != null && !realResults.isEmpty()) {
+                boolean hasReal = realResults != null && !realResults.isEmpty();
+                if (hasReal) {
                     results = convertToControllerMetrics(realResults);
                 } else {
                     results = generateMockData(city.getName(), daysBack, maxHorizon);
@@ -389,8 +407,10 @@ public class AccuracyController {
                 Platform.runLater(() -> {
                     loadingIndicator.setVisible(false);
                     displayResults(results, city.getName());
+                    exportCsvBtn.setDisable(!hasReal);
+                    exportJsonBtn.setDisable(!hasReal);
                     statusLabel.setText("✅ Backtest completat pentru " + city.getName()
-                        + (realResults != null && !realResults.isEmpty() ? " (date reale)" : " (demo)"));
+                        + (hasReal ? " (date reale)" : " (demo)"));
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -597,6 +617,46 @@ public class AccuracyController {
             label.setText(String.format("%.1f%s", current, unit));
         });
         timeline.play();
+    }
+
+    private void exportAccuracyCsv() {
+        City city = cityCombo.getValue();
+        if (city == null || lastBacktestResults == null || lastBacktestResults.isEmpty()) {
+            statusLabel.setText("⚠ Nu există date de exportat!");
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export CSV acuratețe");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
+        chooser.setInitialFileName("acuratete_" + city.getName().replaceAll("\\s+", "_") + "_" + java.time.LocalDate.now() + ".csv");
+        java.io.File file = chooser.showSaveDialog(null);
+        if (file == null) return;
+        try {
+            exportService.exportAccuracyToCsv(lastBacktestResults, file.toPath());
+            statusLabel.setText("✅ Exportat la: " + file.getAbsolutePath());
+        } catch (Exception ex) {
+            statusLabel.setText("Eroare export: " + ex.getMessage());
+        }
+    }
+
+    private void exportAccuracyJson() {
+        City city = cityCombo.getValue();
+        if (city == null || lastBacktestResults == null || lastBacktestResults.isEmpty()) {
+            statusLabel.setText("⚠ Nu există date de exportat!");
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export JSON acuratețe");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON", "*.json"));
+        chooser.setInitialFileName("acuratete_" + city.getName().replaceAll("\\s+", "_") + "_" + java.time.LocalDate.now() + ".json");
+        java.io.File file = chooser.showSaveDialog(null);
+        if (file == null) return;
+        try {
+            exportService.exportAccuracyToJson(lastBacktestResults, file.toPath());
+            statusLabel.setText("✅ Exportat la: " + file.getAbsolutePath());
+        } catch (Exception ex) {
+            statusLabel.setText("Eroare export: " + ex.getMessage());
+        }
     }
 
     // ==================== Modele de date interne ====================

@@ -17,5 +17,19 @@ services:
       retries: 5
     restart: unless-stopped
 
+  app:
+    build: .
+    container_name: prognoza-meteo-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/prognoza_meteo
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DISPLAY: ${DISPLAY:-}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+
 volumes:
   pgdata:
