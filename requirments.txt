@@ -1,0 +1,36 @@
+Proiect 2 - Prognoza Meteo
+Realizați o aplicație care să genereze prognoze meteo pentru fiecare zi dintr-un an calendaristic și diferite statistici, rapoarte sau previziuni cu privire la prognoza meteo pentru fiecare oraș din Europa 
+sau din lume.
+
+În baza de date informațiile trebuie structurate în așa fel încât să obținem o prognoza(raport) meteo care să cuprindă: data, țara, orașul, temperatura minimă și maximă, viteză vânt, un tip de pictogramă 
+care să reprezinte starea vremii generale (exe: nori, nori cu soare, ploaie, ninsoare, etc), indice UV (scăzut, mediu, etc - sau folosiți altă clasificare), procentul de umiditate, o avertizare meteo dacă 
+este cazul, în situații excepționale (exe: avertizare de furtună la o umiditate foarte mare si vânt foarte puternic + alte recomandări, a se sta acasă, a se lua umbrelă, etc.), și posibil alte detalii pe 
+care le considerați necesare.
+
+Pot fi incluse comentarii ale utilizatorilor aplicației, care să ateste validitatea acestei prognoze, sau se poate vota acuratețea informațiilor, sau pur și simplu se pot lăsa anumite comentarii sau 
+indicații între utilizatori.
+
+La nivel de interfață, puteți afișa și o hartă pe țări sau regiuni, cu temperatura min și max pentru orașele importante din acea țară.
+
+Prognozele se fac la nivel de oraș și sunt înregistrate în baza de date prognoze pentru fiecare zi din an.
+
+Pictograma poate fi stocată, sau pentru ceva mai complex, poate fi generată în funcție de anumiți parametri: temperatura, umiditate, precipitații, vant, indice UV, etc.
+
+Avertizarea meteo poate fi stocată ca observație în baza de date sau, pentru ceva mai complex, generată automat în funcție de anumite analize meteo, statistici ale prognozei curente și ale prognozelor 
+precedente.
+
+Pot fi realizate comparații între prognoza unui oraș dintr-o zi față de media prognozelor din aceeași zi din ani diferiți sau sezoniere, precum vară, iarnă, sau pe luni de zile, sau anuală, a tempreraturilor 
+max si min sau/și a temperaturii medii.
+
+Se pot face previziuni pe o săptămână sau 10 zile maxim pe baza prognozelor precedente.
+
+Se pot face analize de temperaturi extreme sau anomalii, legate de temperatură, vânt, umiditate sau indice UV, sau identifica prognoze cu erori mari și posibilitatea de avertizare automată a utilizatorilor 
+în funcție de analiza meteo sau în funcție de identificarea unor cuvinte cheie din avertizarea meteo.
+
+Se pot face clasificări ale orașelor cu prognoze similare sau cât mai apropiate, pe anumite perioade de timp cu o reprezentare grafică a lor, sau un grafic cu evoluția meteo pentru un oraș. Se pot realiza 
+diferite clasamente ale orașelor în funcție de prognoza meteo.
+
+Se poate realiza un scor sau un rank al prognozelor pe baza comentariilor sau voturilor utilizatorilor și în funcție de reputația userului, care poate fi calculată pe baza istoriei feedbackurilor acordate 
+înainte.
+
+Toate aceste statistici pot fi realizate la nivel de server de baze de date. La nivel de client, sunt preluate prin proceduri stocate rezultatele finale.

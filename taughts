@@ -1,0 +1,413 @@
+the weather also follows a rythm , after much sun comes a summer storm , in winter it snows regularly , things like this . if today is a big storm , tommorow cant be very bright with 0 humidity , understand ?> we need to think about this as well , also ? is this a good point ?  make the vectors more detailes , please as the initial step. the wehater is probailistic , so we need to compute the changes for other things too , in autumn and winter there might be fog as well , there metheorologic fenomens have a recipies . also , hidden staes , deep MARKOV CHAINS 
+Thinking: The user is making several important points:
+1. Weather has a rhythm — sequences matter (sun → storm, not storm → 0% humidity next day). This is about forbidden transitions and typical sequences.
+2. Physical constraints — after a big storm, tomorrow CANNOT have 0% humidity. Some transitions are physically impossible or extremely unlikely. The model should respect these constraints.
+3. Meteorological phenomena have "recipes" — specific combinations of parameters that produce specific weather events (fog needs: high humidity + low wind + temperature near dew point + specific season).
+4. Hidden states — there are unobservable (or partially observable) states driving the weather. A Hidden Markov Model (HMM) could capture these: the observed weather is an emission from a latent state (like "approaching cold front", "stable high pressure system", "marine layer", etc.)
+5. Deep Markov Chains — multi-layer: top layer = synoptic patterns (high/low pressure systems), middle layer = regional weather regimes, bottom layer = local observable weather. This is essentially a Hierarchical Hidden Markov Model.
+Let me think deeply about each of these:
+1. Physical Constraints & Forbidden Transitions
+The transition matrix should be sparse — many transitions have probability ~0:
+After a storm (humidity > 90%, wind > 60km/h):
+  → P(sunny_clear, humidity < 30%) ≈ 0.00  # impossible
+  → P(cloudy, humidity 70-85%) ≈ 0.40        # likely - system recovering
+  → P(rain_continuing, humidity 85-95%) ≈ 0.35
+  → P(overcast_drizzle, humidity 75-85%) ≈ 0.20
+  → P(storm_re-intensifying) ≈ 0.05
+After 7 days of heatwave (temp > 35, humidity < 25%):
+  → P(afternoon_thunderstorm) ≈ 0.35  # the "rhythm" - heat builds, then breaks
+  → P(heatwave_continues) ≈ 0.45
+  → P(slight_cooling) ≈ 0.20
+The laws of thermodynamics prevent instant humidity drops after heavy precipitation. Soil moisture, evaporation, and atmospheric mixing guarantee gradual recovery.
+2. Meteorological "Recipes" (Phenomenon Signatures)
+Each weather phenomenon has a characteristic fingerprint in the 8D+ space:
+Fog (autumn/winter, early morning):
+INGREDIENTS: humidity > 85%, wind_speed < 10 km/h, 
+             |temp - dew_point| < 2°C, 
+             sunshine_hours < 2, season ∈ {autumn, winter}
+             
+PHYSICS: Radiative cooling at night drops temp to dew point
+         → condensation at ground level → fog
+         Zero wind needed (stirs and dissipates fog)
+Summer afternoon thunderstorm:
+INGREDIENTS: temp_max > 30°C, humidity 60-80%, 
+             sunshine > 8h (builds convection), 
+             pressure_trend = falling (afternoon low),
+             CAPE > 1000 J/kg (if we had it)
+             
+PHYSICS: Solar heating → warm air rises → cumulonimbus → 
+         precipitation + lightning + possible hail
+         
+SEQUENCE: sunny_morning → cumulus_building → thunderstorm → clearing_evening
+Winter persistent fog (anticyclonic):
+INGREDIENTS: high_pressure, clear_nights, temp < 5°C,
+             humidity > 90%, wind < 5 km/h
+             
+PHYSICS: High pressure inversion traps moisture. 
+         Can persist for DAYS until pressure system moves.
+         
+SEQUENCE: foggy → foggy → foggy → foggy → clearing_with_front
+Cold front passage:
+INGREDIENTS: pressure_drop > 5hPa/3h, wind_turning (SW→NW),
+             temp_drop > 5°C in 6h, humidity change
+             
+SEQUENCE: warm_muggy → pressure_drops → wind_shift → 
+         heavy_rain_burst → rapid_clearing → cold_dry
+Marine layer (coastal):
+INGREDIENTS: proximity_to_coast, onshore_wind, 
+             temp_gradient(land > sea), season ∈ {spring, summer}
+             
+SEQUENCE: overnight_fog_stratus → morning_overcast → 
+         midday_burning_off → sunny_afternoon → overnight_return
+3. Hidden Markov Model (HMM)
+The observable weather is an emission from a hidden "synoptic state":
+Hidden states (unobserved, inferred):
+  H₁ = "Stable anticyclone" (high pressure dominating, several days)
+  H₂ = "Approaching warm front"
+  H₃ = "Warm sector" (between warm front and cold front)
+  H₄ = "Cold front passage"
+  H₅ = "Post-frontal clearing"
+  H₆ = "Cyclonic depression"
+  H₇ = "Thunderstorm outbreak"
+  H₈ = "Marine layer / coastal stratus"
+Each hidden state has:
+  - Duration distribution (how many days it typically lasts)
+  - Emission distribution over the 8D weather vector
+  - Transition probabilities to other hidden states
+Duration matters: An anticyclone can last 1-2 weeks. A cold front passage lasts ~6 hours. This means the model needs semi-Markov properties — the probability of leaving a state depends on how long you've been in it.
+Why this is powerful: Instead of modeling 20×20×20×20×20 = 3.2 million raw transitions in the observable space, we model 8×8 = 64 hidden transitions with smooth, physically meaningful emission distributions.
+4. Hierarchical Deep Markov Chain
+Level 1 (Synoptic scale, 1000km, days-to-weeks):
+  States: "Siberian High", "Azores High dominating", "North Atlantic Low train"
+  Properties: large-scale pressure patterns, jet stream position
+  Persistence: 5-20 days
+  
+Level 2 (Regional, 100km, 1-3 days):
+  States: "on anticyclone east flank", "approaching cold front", "post-frontal"
+  Properties: wind direction, cloud cover tendency, pressure tendency
+  Persistence: 1-5 days
+  
+Level 3 (Local observable, single city, daily):
+  The actual 8D weather vector — emitted from Level 2 state + Level 1 seasonal parameter
+The hierarchy means:
+P(weather_tomorrow) = f(
+  today's_weather,           // bottom-up
+  regional_pressure_system,  // middle layer
+  seasonal_forcing,          // top layer
+  jet_stream_meander         // long-range teleconnection
+)
+5. The Rhythm & Typical Sequences
+The user's point about rhythm is critical. Weather has canonical sequences — stories that the atmosphere tells:
+Mid-latitude cyclone lifecycle (2-5 days):
+cirrus_approach → stratus_thickening → light_rain → 
+heavier_rain → wind_shift_SW→NW → clearing → cold_sunny
+Summer convective day:
+clear_morning → cumulus_building → towering_cumulus → 
+thunderstorm → gust_front → stratus_leftovers → clear_night
+Winter anticyclone:
+fog_morning → clearing_by_noon → cold_sunny → 
+fog_evening → radiation_fog_night → repeat_3_to_7_days → 
+pressure_system_moves → cloudy_with_rain
+The Markov transition matrix automatically encodes these rhythms when trained on real data. The "sun → storm" connection emerges from counting. The "storm → 0% humidity tomorrow" is physically impossible and will have count ≈ 0.
+6. What Makes This "Good"
+The user's points are excellent. Here's why:
+- Physical constraints → sparse transition matrix → fewer parameters to learn → less overfitting
+- Recipe-based phenomena → can be used as priors → Bayesian: P(state | data) ∝ P(data | state) × P(state | recipe)
+- HMM → separates "what we see" from "what's actually happening" → the same visible weather can come from different hidden states (rain from cold front vs rain from afternoon convection — very different implications for tomorrow)
+- Duration awareness → a day-3 anticyclone has different expected continuation than a day-15 anticyclone
+- Rhythm/sequences → second-order or even n-gram Markov captures these automatically from data
+7. Enhanced Vector Design
+Let me now design a richer, more detailed vector that captures all these nuances:
+The enhanced daily weather vector (18-22 dimensions):
+LAYER 1: Core Temperature (4D)
+  temp_min, temp_max, temp_avg, temp_amplitude
+LAYER 2: Moisture (4D)
+  humidity_min, humidity_max, humidity_avg,
+  dew_point_min, dew_point_avg (computed: temp - ((100 - humidity)/5))
+  → captures "stickiness" of the air
+LAYER 3: Wind (3D)
+  wind_speed_avg, wind_speed_max, wind_gust_max
+  → gust factor = wind_gust / wind_speed → turbulence indicator
+LAYER 4: Radiation & Sun (3D)
+  sunshine_hours, uv_index_max, solar_radiation (if available)
+  cloud_cover_estimated = f(sunshine_hours, max_possible_for_date)
+  → clear(0-20%), partly(20-60%), cloudy(60-90%), overcast(90-100%)
+LAYER 5: Precipitation (4D)
+  precipitation_sum, precipitation_hours, precipitation_probability
+  snow_depth (winter)
+LAYER 6: Pressure (3D)
+  surface_pressure_mean, pressure_tendency (rising/steady/falling)
+  → rising = improving weather, falling = deteriorating
+LAYER 7: Temporal Signals (3D encoded)
+  day_of_year_sin, day_of_year_cos (captures seasons)
+  → Dec 31 and Jan 1 are 1 day apart, not 364 days apart
+LAYER 8: Derived Indices (3D)
+  convective_available_potential_energy (proxy from temp_range + humidity)
+  wind_chill_index, heat_index
+That's about 20-25 dimensions — rich enough to capture regimes, small enough that k-means is stable with ~1000-3000 samples (3-8 years of daily data per city).
+8. The "Recipe Detector" Layer
+Before Markov transitions, add a phenomenon classifier:
+For each day's vector:
+  is_fog_day = (humidity > 85% AND wind < 10 AND |temp - dew| < 2 AND season IN {autumn, winter})
+  is_thunderstorm_day = (precip > 5mm AND temp_amplitude > 12 AND humidity_range > 30% AND summer)
+  is_heatwave_day = (temp_max > 35 AND temp_min > 22 AND humidity < 30%)
+  is_cold_snap = (temp_min < -5 AND temp_amplitude < 3 AND humidity < 60%)
+  is_marine_layer = (coastal AND morning_humidity > 85% AND afternoon_clearing)
+These are soft labels — fuzzy membership, not binary. Each day can partially match multiple recipes. The membership scores become additional dimensions in the vector, enriching the clustering.
+9. The Full Model Architecture (Final Sketch)
+DATA: 20D daily vectors × N years × M cities
+STEP 1 — Recipe detection:
+  Each day → vector of phenomenon_scores [fog:0.1, storm:0.0, ...]
+  Append to vector → ~28D enhanced vector
+STEP 2 — Clustering (k-means on historical, k=12-20):
+  Each day assigned to regime r ∈ {1..K}
+  Each regime has: centroid μᵣ, covariance Σᵣ, seasonal frequency f(season, r)
+STEP 3 — Hidden Markov Model (Baum-Welch / EM algorithm):
+  H = number of hidden states (6-10, set manually)
+  Learn: P(hⱼ | hᵢ) transition, P(regime | h) emission
+  These hidden states capture the "deep" synoptic patterns
+  After learning, label hidden states by inspection:
+    H₁ = "stable_anticyclone", H₂ = "cyclonic_passage", etc.
+STEP 4 — Markov transition tensor (conditioned on hidden state):
+  P(regime_tomorrow | regime_today, hidden_state_today)
+  This is 3D: [K × K × H] — transitions depend on the hidden synoptic context
+STEP 5 — Monte Carlo (seeded with today's observed regime + inferred hidden state):
+  For each simulation (N=5000):
+    a. Keep hidden state (persists for duration typical of that state)
+    b. Sample next regime from conditioned transition tensor
+    c. Emit 20D weather vector ~ multivariate_normal(μᵣ, Σᵣ)
+    d. Apply physical constraints (forbidden transitions → resample)
+  Result: 5000 plausible 10-day weather trajectories
+STEP 6 — Extract predictions:
+  For each future day, sort 5000 samples → 
+    temp_max: [P05: 12°C, P50: 18°C, P95: 24°C]
+    P(rain): count(precip > 1mm) / 5000
+    P(storm): count(regime = storm) / 5000
+    P(fog): count(fog_score > 0.5) / 5000
+This is a proper probabilistic weather model — it knows what cannot happen (physical constraints), what typically happens (Markov transitions), what's possible but unusual (tails of the emission distribution), and how long patterns persist (hidden state durations).
+The key difference from simple averaging: this model maintains physical consistency. It won't predict "storm today, 0% humidity tomorrow" because that transition has count=0 in the training data. The Monte Carlo respects the multivariate Gaussian covariance — when it samples high humidity, it also samples low sunshine (they're negatively correlated in the data).
+Excellent points. Let's think deeper about the physics, the rhythms, and the hidden structure.
+---
+Physical Constraints: The "Forbidden Transitions" Problem
+After a big storm, the ground is soaked. Tomorrow's humidity cannot be 0%. This isn't just a probability of 0.001 — it's a thermodynamic impossibility.
+Why? After 30mm of rain, soil moisture is at field capacity. Evaporation over 24h even in full sun can only return ~2-5mm of water vapor to the air column. With saturated soil, the minimum next-day humidity is ~60-70%, not 30%, not 0%.
+This means the transition matrix should be sparse — not just low probabilities, but structural zeros:
+FROM state = "storm" (high wind, precip > 10mm, humidity > 90%):
+  TO "dry_sunny" (humidity < 30%)    → PHYSICALLY FORBIDDEN (structural zero)
+  TO "partly_cloudy" (humidity 40-60%) → EXTREMELY UNLIKELY (near-zero)
+  TO "overcast_drizzle" (humidity 70-85%) → PLAUSIBLE (system recovering)
+  TO "rain_continuing" (humidity 85-95%)  → PLAUSIBLE (system persisting)
+  TO "cold_front_clearing" (temp drops, wind shifts, humidity 60-75%) → PLAUSIBLE
+These constraints dramatically reduce the degrees of freedom. Instead of learning 100 transition probabilities (10×10 states), we learn ~30 structurally possible ones.
+---
+The Rhythm: Canonical Sequences
+Your point about "after much sun comes a summer storm" is the convective cycle. On a hot summer day, the sun heats the ground, warm air rises (thermal), cumulus clouds build, and by 4-6 PM — if there's enough moisture and instability — a thunderstorm breaks out.
+This is a multi-day sequence with a specific temporal structure:
+SUMMER CONVECTIVE CYCLE (2-3 days):
+  Day 1: clear_morning → cumulus_humilis (small puffy clouds, 11am) 
+         → cumulus_mediocris (taller, 2pm) → cumulus_congestus (towering, 4pm)
+         → thunderstorms (5-7pm) → gust_front → clearing_by_night
+  Day 2: residual_moisture → partly_cloudy → possible_afternoon_shower (weaker)
+  Day 3: stable_clearing → sunny_dry
+WINTER ANTICYCLONIC FOG CYCLE (3-10 days):
+  Day 1: high_pressure_settles → radiation_fog_overnight → fog_until_11am → 
+         thin_sun → fog_returns_by_5pm
+  Day 2: same_pattern (slightly denser fog, takes longer to burn off)
+  Day 3-5: persistent_stratus — fog NEVER clears, temp stays 0-3°C all day
+  Day 6: weak_front_approaches → wind picks up → fog_dissipates → overcast_drizzle
+  
+  This can persist for 10+ days in valleys (Po Valley, Central Europe basins).
+  The key insight: day 4 of a fog event is DIFFERENT from day 1.
+  Day 1: might clear. Day 4: won't clear. Duration changes the probabilities.
+MID-LATITUDE CYCLONE (3-5 days, any season):
+  Phase 1 (approach): high_cirrus → lowering_stratus → pressure_falling 
+  Phase 2 (warm front): steady_rain → temperature_rising → wind_backing_SW
+  Phase 3 (warm sector): mild_humid → drizzle_or_clear → pressure_stable
+  Phase 4 (cold front): sudden_wind_shift → heavy_rain_squall → temperature_drop 
+  Phase 5 (clearing): rapid_clearing → cold_bright → pressure_rising
+These are irreversible sequences — the system moves through phases in order. A cold front doesn't go backwards into a warm sector. This is why the Markov needs order > 1: knowing only "today = Phase 3 (warm sector)" gives P(rain tomorrow). But knowing "(Phase 2, Phase 3)" tells you it's likely advancing to Phase 4 — that information is in the pair, not the single state.
+---
+Deep Hidden Markov Model (3 Layers)
+The visible weather is the bottom layer. Above it are unobserved drivers:
+LAYER 3 (Planetary / synoptic, 1000-3000km, weeks):
+  States identified by meteorologists on pressure charts:
+    Ω₁: "Azores High extension over central Europe"
+    Ω₂: "Scandinavian blocking high"  
+    Ω₃: "Icelandic Low train (zonal flow)"
+    Ω₄: "Cut-off low over Mediterranean"
+    Ω₅: "Omega block (high-low-high)"
+  
+  These persist 5-21 days and determine the "weather type."
+  Under Ω₁: warm, dry summer or cold, dry winter (depending on season).
+  Under Ω₃: train of rain systems every 2-3 days (classic European autumn).
+LAYER 2 (Regional / mesoscale, 100-500km, 1-5 days):
+  States:
+    H₁: "anticyclonic_dome" (subsiding air, clear skies, temperature inversion)
+    H₂: "pre_frontal" (approaching system, falling pressure, increasing cloud)
+    H₃: "frontal_passage" (wind shift, precipitation band, rapid change)
+    H₄: "post_frontal" (cold advection, cumulus streets, showery)
+    H₅: "convective_building" (surface heating, instability building)
+    H₆: "convective_release" (thunderstorm outbreak, rapid pressure changes)
+    H₇: "marine_layer" (coastal stratus, onshore flow, diurnal burn-off)
+    H₈: "radiation_fog_regime" (clear nights, near-zero wind, inversion)
+LAYER 1 (Local observable, single city, daily):
+  The 20D weather vector emitted from the Layer 2 hidden state.
+The key property: Layer 2 states are inferred, not observed. You see the 20D vector but you don't know whether today's rain is from a cold front (→ clearing tomorrow) or from orographic uplift against mountains (→ rain continues). The HMM learns to distinguish these from the sequence of observations, because they have different transition patterns.
+---
+Enhanced 25D Weather Vector
+Now for the richer vector you asked for:
+═══════════════════════════════════════════
+LAYER A: THERMAL (5 dimensions)
+═══════════════════════════════════════════
+  A1: temp_min          — daily minimum (°C)
+  A2: temp_max          — daily maximum (°C)  
+  A3: temp_avg          — (min+max)/2
+  A4: temp_amplitude    — max−min (diurnal range — small in fog, large in desert)
+  A5: temp_trend        — today's avg − yesterday's avg (warming/cooling signal)
+═══════════════════════════════════════════
+LAYER B: MOISTURE (5 dimensions)
+═══════════════════════════════════════════
+  B1: humidity_min      — driest point of day (usually afternoon)
+  B2: humidity_max      — most humid point (usually dawn)
+  B3: humidity_avg      — mean relative humidity
+  B4: dew_point_min     — minimum dew point (absolute moisture)
+  B5: dew_point_spread  — temp_min − dew_point_min 
+                        → when < 2°C: fog/condensation imminent
+═══════════════════════════════════════════
+LAYER C: WIND (4 dimensions)
+═══════════════════════════════════════════
+  C1: wind_speed_avg    — mean wind (km/h)
+  C2: wind_speed_max    — peak gust (km/h)
+  C3: gust_factor       — max/avg ratio (>3 = convective gusts, <1.5 = steady)
+  C4: wind_persistence  — hours with wind > 20 km/h (0-24)
+═══════════════════════════════════════════
+LAYER D: RADIATION & CLOUD (4 dimensions)
+═══════════════════════════════════════════
+  D1: sunshine_hours    — actual hours of sun (0-16 depending on season)
+  D2: sunshine_fraction — actual / max_possible_for_date 
+                        → 0.0 = fully overcast, 1.0 = clear all day
+  D3: uv_index_max      — peak UV (0-11+)
+  D4: estimated_cloud   — 1.0 − sunshine_fraction → cloud cover proxy
+═══════════════════════════════════════════
+LAYER E: PRECIPITATION (4 dimensions)
+═══════════════════════════════════════════
+  E1: precipitation_sum — total mm in 24h
+  E2: precip_intensity  — precip_sum / precip_hours (mm/h) 
+                        → <1 = drizzle, 1-5 = moderate, >5 = heavy
+  E3: precipitation_hours — duration (0-24h)
+  E4: snow_depth        — cm (0 in summer, up to N in winter)
+═══════════════════════════════════════════
+LAYER F: PRESSURE (3 dimensions)
+═══════════════════════════════════════════
+  F1: pressure_mean     — mean sea-level pressure (hPa)
+  F2: pressure_trend    — today's mean − yesterday's mean 
+                        → negative = deteriorating, positive = improving
+  F3: pressure_range    — max−min (diurnal pressure oscillation — 
+                          2-3 hPa normal, >5 hPa = strong system approaching)
+That's 25 dimensions. You can also compute derivatives over time (acceleration) as additional features.
+---
+Recipe Detection: Phenomenon Signatures
+Each meteorological phenomenon leaves a distinctive fingerprint in this 25D space. These are fuzzy detectors that add membership scores:
+FOG DETECTOR (score 0.0-1.0):
+  = min(
+    membership(humidity_avg, sigmoid, center=88%, width=5%),      // must be humid
+    membership(wind_speed_avg, reverse_sigmoid, center=8 km/h),   // low wind
+    membership(dew_point_spread, reverse_sigmoid, center=2.5°C),  // near saturation
+    membership(sunshine_fraction, reverse_sigmoid, center=0.3),   // overcast
+    1.0  // always possible in autumn/winter, lower weight in summer
+  )
+AFTERNOON THUNDERSTORM DETECTOR:
+  = min(
+    membership(temp_max, sigmoid, center=28°C),         // hot day
+    membership(temp_amplitude, sigmoid, center=13°C),   // strong diurnal swing
+    membership(humidity_min, sigmoid, center=45%),      // enough moisture
+    membership(gust_factor, sigmoid, center=2.5),       // gusty
+    membership(precip_intensity, sigmoid, center=3mm/h),// heavy burst
+    seasonal_weight(summer=1.0, spring=0.5, autumn=0.4, winter=0.05)
+  )
+PERSISTENT ANTICYCLONIC GLOOM (winter stratus):
+  = min(
+    membership(sunshine_fraction, reverse_sigmoid, center=0.15), // no sun
+    membership(temp_amplitude, reverse_sigmoid, center=4°C),     // flat temp
+    membership(wind_speed_avg, reverse_sigmoid, center=5 km/h),  // still
+    membership(pressure_trend, gaussian, center=0, width=1.5),   // stable pressure
+    membership(humidity_avg, sigmoid, center=82%),               // damp
+    seasonal_weight(winter=1.0, autumn=0.8, spring=0.4, summer=0.1)
+  )
+These detectors run over every historical day, adding 8-12 scores as extra dimensions, making the vector ~33-37D for clustering. The clusters that emerge will naturally align with meteorological regimes because the recipe scores push similar phenomena together.
+---
+Full Architecture
+HISTORICAL DATA (10 years × 365 days × N cities)
+         │
+         ├── Compute 25D vectors for every day
+         ├── Run recipe detectors → append 8 scores → 33D
+         ├── Compute temporal derivatives (Δ over 1,2,3 days) → ~40D
+         │
+         ▼
+    K-MEANS (K=16, on 40D vectors, all cities pooled by climate zone)
+         │
+         ▼
+    Each day → regime label r ∈ {1..16}
+    Each regime → centroid μᵣ (40D row), covariance Σᵣ (40×40 matrix)
+         │
+         │  The regimes are now CLIMATE-ZONE SPECIFIC:
+         │  Regime 3 in Bucharest ≠ Regime 3 in Oslo
+         │  (they're separate k-means runs per climate zone)
+         │
+         ▼
+    SECOND-ORDER MARKOV transition tensors (per city, per season):
+      COUNT(rₜ₊₁ | rₜ, rₜ₋₁, season) → T[season][r₋₁][r₀][r₁]
+      
+      Structural zeros enforced:
+        IF Precip(r₀) > 10mm AND Humidity(r₁) < 40% → PROBABILITY = 0.000
+        (resampling enforced in Monte Carlo)
+         │
+         ▼
+    HIDDEN MARKOV MODEL (Baum-Welch, H=8 hidden states, per city):
+      Learn: P(hⱼ | hᵢ) hidden transitions
+             P(r | hᵢ) emission probabilities
+      
+      After training, inspect emissions to label hidden states:
+        h₂: emits regime{3:0.45, 7:0.30, 9:0.15} → "convective_active"
+        h₅: emits regime{1:0.70, 2:0.20}           → "stable_anticyclone"
+        h₇: emits regime{11:0.50, 12:0.25, 13:0.15} → "frontal_depression"
+         │
+         ▼
+    MONTE CARLO (N=5000 trajectories, 10 days each):
+      Given: today's regime r₀, yesterday's r₋₁, inferred hidden h₀
+      
+      For each simulation k:
+        For t = 1 to 10:
+          1. Hidden state may persist (geometric duration, learned per h)
+             OR transition: sample hₜ ~ P(h | hₜ₋₁)
+          2. Sample regime: rₜ ~ P(r | hₜ, rₜ₋₁, rₜ₋₂, season)
+          3. If transition is PHYSICALLY FORBIDDEN → resample
+             (humidity constraint, precipitation consistency, etc.)
+          4. Emit weather vector: vₜ ~ MultivariateNormal(μᵣ, Σᵣ)
+          5. Blend with seasonal prior: v_blend = α(t)×vₜ + (1-α(t))×μ_seasonal
+             where α(t) = e^(-t/5)
+         │
+         ▼
+    EXTRACT PREDICTIONS:
+      For day t:
+        temp_max_distribution = sort([v⁽¹⁾.temp_max, ..., v⁽⁵⁰⁰⁰⁾.temp_max])
+        → P50 = 22.3°C, P10 = 17.1°C, P90 = 28.4°C
+        
+        P(rain > 5mm) = count(v.precip > 5) / 5000
+        
+        P(storm_this_week) = count(any(t ∈ 1..7 has storm_score > 0.7)) / 5000
+        
+        P(fog_tomorrow) = count(v⁽¹⁾.fog_score > 0.5) / 5000
+        
+        P(regime_change_in_3_days) = count(r₃ ≠ r₀) / 5000
+---
+Why This Is Different From Simple Averaging
+Capability	Simple avg	This model
+Thunderstorm after 3 hot days	Misses — each day independent	Markov captures sequence: hot→hot→hot→storm
+Fog persistence	Unaware — day 4 same as day 1	Semi-Markov: duration matters. Day-4 fog has different behavior
+Storm→impossible sun	Might predict 10% chance	Structural zero. Forbidden. Cannot happen.
+Hidden synoptic driver	Ignores	HMM infers "we're in a cyclonic pattern" → all predictions shift
+Physical consistency	Humidity and sunshine independent	Covariance Σ preserves: high humidity → low sunshine always
+Recipe identification	No	Fuzzy detectors explicitly label fog/storm/heatwave days
+"What's the probability of a storm this week?"	Can't answer	Monte Carlo: count storm states across 5000 trajectories
+Confidence intervals	None	P10/P50/P90 from sorted samples
