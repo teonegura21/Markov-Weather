@@ -704,9 +704,17 @@ public class UnifiedDashboardController extends BaseController {
         }
 
         evolutionChart.getData().addAll(minSeries, avgSeries, maxSeries);
-        minSeries.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2px;");
-        avgSeries.getNode().setStyle("-fx-stroke: #a78bfa; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
-        maxSeries.getNode().setStyle("-fx-stroke: #f97316; -fx-stroke-width: 2px;");
+        Platform.runLater(() -> {
+            if (minSeries.getNode() != null) {
+                minSeries.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2px;");
+            }
+            if (avgSeries.getNode() != null) {
+                avgSeries.getNode().setStyle("-fx-stroke: #a78bfa; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
+            }
+            if (maxSeries.getNode() != null) {
+                maxSeries.getNode().setStyle("-fx-stroke: #f97316; -fx-stroke-width: 2px;");
+            }
+        });
     }
 
     private void renderProbabilistic(List<PredictionEngineService.MonteCarloResult> results) {
@@ -743,9 +751,17 @@ public class UnifiedDashboardController extends BaseController {
         regimeLabel.setText("🌡️ " + regime);
 
         probChart.getData().addAll(p10, p50, p90);
-        p10.getNode().setStyle("-fx-stroke: #4ade80; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
-        p50.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2.5px;");
-        p90.getNode().setStyle("-fx-stroke: #f87171; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
+        Platform.runLater(() -> {
+            if (p10.getNode() != null) {
+                p10.getNode().setStyle("-fx-stroke: #4ade80; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
+            }
+            if (p50.getNode() != null) {
+                p50.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2.5px;");
+            }
+            if (p90.getNode() != null) {
+                p90.getNode().setStyle("-fx-stroke: #f87171; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
+            }
+        });
     }
 
     private void renderComparison(List<ComparisonResult> results) {

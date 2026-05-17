@@ -43,7 +43,7 @@ BEGIN
             POWER(o.tmax - r.tmax, 2) +
             POWER(o.hum - r.hum, 2) +
             POWER(o.wind - r.wind, 2)
-        )::numeric, 2),
+        )::numeric, 2)::DOUBLE PRECISION,
         ROUND(o.tmin::numeric, 1),
         ROUND(o.tmax::numeric, 1),
         ROUND(o.hum::numeric, 1),

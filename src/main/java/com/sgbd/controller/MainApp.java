@@ -129,6 +129,8 @@ public class MainApp extends Application {
             appState.setWindowWidth(primaryStage.getWidth());
             appState.setWindowHeight(primaryStage.getHeight());
             appState.save();
+            Platform.exit();
+            System.exit(0);
         });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
