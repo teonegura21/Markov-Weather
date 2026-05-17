@@ -45,13 +45,29 @@ public class WeatherApiService {
         public int uvIndex;
         public int humidity;
         public double precipSum;
+        public double pressureMean;
+        public double sunshineHours;
+        public double precipitationHours;
+        public double dewPoint;
+    }
+
+    public static class HourlyWeather {
+        public LocalDate date;
+        public int hour;
+        public double temperature;
+        public int humidity;
+        public double windSpeed;
+        public int precipProbability;
+        public int weatherCode;
     }
 
     public List<DailyWeather> fetchHistorical(double lat, double lon, LocalDate start, LocalDate end) {
         checkCircuitBreaker();
         String url = String.format(
             "%s?latitude=%.4f&longitude=%.4f&start_date=%s&end_date=%s" +
-            "&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,uv_index_max,precipitation_sum,relative_humidity_2m_mean" +
+            "&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,uv_index_max," +
+            "precipitation_sum,precipitation_hours,pressure_msl_mean,sunshine_duration,dew_point_2m_mean," +
+            "relative_humidity_2m_mean" +
             "&timezone=auto",
             ARCHIVE_URL, lat, lon, start, end
         );
@@ -69,12 +85,32 @@ public class WeatherApiService {
         checkCircuitBreaker();
         String url = String.format(
             "%s?latitude=%.4f&longitude=%.4f" +
-            "&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,uv_index_max,precipitation_sum,relative_humidity_2m_mean" +
+            "&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,uv_index_max," +
+            "precipitation_sum,precipitation_hours,pressure_msl_mean,sunshine_duration,dew_point_2m_mean," +
+            "relative_humidity_2m_mean" +
             "&timezone=auto&forecast_days=%d",
             FORECAST_URL, lat, lon, days
         );
         try {
             List<DailyWeather> result = fetchAndParse(url, null);
+            resetCircuitBreaker();
+            return result;
+        } catch (RuntimeException e) {
+            recordFailure();
+            throw e;
+        }
+    }
+
+    public List<HourlyWeather> fetchHourlyForecast(double lat, double lon, int days) {
+        checkCircuitBreaker();
+        String url = String.format(
+            "%s?latitude=%.4f&longitude=%.4f" +
+            "&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation_probability,weather_code" +
+            "&timezone=auto&forecast_days=%d",
+            FORECAST_URL, lat, lon, days
+        );
+        try {
+            List<HourlyWeather> result = fetchAndParseHourly(url);
             resetCircuitBreaker();
             return result;
         } catch (RuntimeException e) {
@@ -199,6 +235,10 @@ public class WeatherApiService {
         JsonNode uv = daily.get("uv_index_max");
         JsonNode hum = daily.get("relative_humidity_2m_mean");
         JsonNode precip = daily.get("precipitation_sum");
+        JsonNode precipHours = daily.get("precipitation_hours");
+        JsonNode pressure = daily.get("pressure_msl_mean");
+        JsonNode sunshine = daily.get("sunshine_duration");
+        JsonNode dew = daily.get("dew_point_2m_mean");
 
         if (dates == null || tmax == null || tmin == null) {
             throw new RuntimeException("Missing required fields in API response");
@@ -229,9 +269,109 @@ public class WeatherApiService {
                 dw.precipSum = 0;
             }
 
+            if (precipHours != null && !precipHours.get(i).isNull()) {
+                dw.precipitationHours = precipHours.get(i).asDouble();
+            } else {
+                dw.precipitationHours = 0;
+            }
+
+            if (pressure != null && !pressure.get(i).isNull()) {
+                dw.pressureMean = pressure.get(i).asDouble();
+            } else {
+                dw.pressureMean = 1013.25;
+            }
+
+            if (sunshine != null && !sunshine.get(i).isNull()) {
+                dw.sunshineHours = sunshine.get(i).asDouble() / 3600.0;
+            } else {
+                dw.sunshineHours = 0;
+            }
+
+            if (dew != null && !dew.get(i).isNull()) {
+                dw.dewPoint = dew.get(i).asDouble();
+            } else {
+                dw.dewPoint = (dw.tempMin + dw.tempMax) / 2.0;
+            }
+
             result.add(dw);
         }
 
+        return result;
+    }
+
+    private List<HourlyWeather> fetchAndParseHourly(String url) {
+        Exception lastException = null;
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .GET()
+                    .build();
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 429) {
+                    long delayMs = getRetryAfterMs(response);
+                    if (attempt < MAX_RETRIES) {
+                        Thread.sleep(delayMs);
+                        continue;
+                    }
+                    throw new RuntimeException("API error: HTTP 429");
+                }
+                if (response.statusCode() >= 500) {
+                    if (attempt < MAX_RETRIES) {
+                        Thread.sleep(BACKOFF_DELAYS_MS[attempt]);
+                        continue;
+                    }
+                    throw new RuntimeException("API error: HTTP " + response.statusCode());
+                }
+                if (response.statusCode() != 200) {
+                    throw new RuntimeException("API error: HTTP " + response.statusCode());
+                }
+                return parseHourlyResponse(response.body());
+            } catch (IOException e) {
+                lastException = e;
+                if (attempt < MAX_RETRIES) {
+                    try { Thread.sleep(BACKOFF_DELAYS_MS[attempt]); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Retry întrerupt", ie);
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Cerere API întreruptă", e);
+            }
+        }
+        throw new RuntimeException("API request failed după " + (MAX_RETRIES + 1) + " încercări", lastException);
+    }
+
+    private List<HourlyWeather> parseHourlyResponse(String body) throws IOException {
+        List<HourlyWeather> result = new ArrayList<>();
+        JsonNode root = objectMapper.readTree(body);
+        JsonNode hourly = root.get("hourly");
+        if (hourly == null) throw new RuntimeException("No 'hourly' block in API response");
+
+        JsonNode times = hourly.get("time");
+        JsonNode temps = hourly.get("temperature_2m");
+        JsonNode hums = hourly.get("relative_humidity_2m");
+        JsonNode winds = hourly.get("wind_speed_10m");
+        JsonNode precips = hourly.get("precipitation_probability");
+        JsonNode codes = hourly.get("weather_code");
+
+        if (times == null || temps == null) {
+            throw new RuntimeException("Missing required hourly fields in API response");
+        }
+
+        for (int i = 0; i < times.size(); i++) {
+            HourlyWeather hw = new HourlyWeather();
+            String ts = times.get(i).asText();
+            hw.date = LocalDate.parse(ts.substring(0, 10));
+            hw.hour = Integer.parseInt(ts.substring(11, 13));
+            hw.temperature = temps.get(i).isNull() ? 0 : temps.get(i).asDouble();
+            hw.humidity = hums != null && !hums.get(i).isNull() ? hums.get(i).asInt() : 0;
+            hw.windSpeed = winds != null && !winds.get(i).isNull() ? winds.get(i).asDouble() : 0;
+            hw.precipProbability = precips != null && !precips.get(i).isNull() ? precips.get(i).asInt() : 0;
+            hw.weatherCode = codes != null && !codes.get(i).isNull() ? codes.get(i).asInt() : 0;
+            result.add(hw);
+        }
         return result;
     }
 }

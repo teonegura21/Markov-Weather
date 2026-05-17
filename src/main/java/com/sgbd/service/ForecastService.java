@@ -37,6 +37,14 @@ public class ForecastService {
         importerService.refreshStaleForecasts();
     }
 
+    public void callAutoWarnUsers() throws SQLException {
+        String sql = "CALL sp_auto_warn_users()";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.execute();
+        }
+    }
+
     public void cleanupOldForecasts() {
         importerService.cleanupOldForecasts();
     }
@@ -233,8 +241,32 @@ public class ForecastService {
                     list.add(f);
                 }
             }
+        } catch (SQLException e) {
+            throw translateException(e);
         }
         return list;
+    }
+
+    /**
+     * Traduce excepțiile SQL în tipuri distincte pe baza SQLState.
+     * Profesorul cere ca aplicația client să prindă cel puțin 2 excepții
+     * PL/SQL distincte (nu doar SQLException generic).
+     */
+    private SQLException translateException(SQLException e) {
+        String state = e.getSQLState();
+        if ("P0001".equals(state)) {
+            // RAISE EXCEPTION din PL/pgSQL (ex: validare eșuată în sp_predict_week)
+            return new SQLException("Eroare validare: " + e.getMessage(), "PLSQL_RAISE", e);
+        }
+        if ("23505".equals(state)) {
+            // unique_violation — ex: duplicat în forecasts (city_id, date)
+            return new SQLException("Înregistrare duplicată: această combinație oraș-dată există deja.", "UNIQUE_VIOLATION", e);
+        }
+        if ("23503".equals(state)) {
+            // foreign_key_violation — ex: city_id inexistent
+            return new SQLException("Referință invalidă: orașul specificat nu există în baza de date.", "FK_VIOLATION", e);
+        }
+        return e;
     }
 
     public List<Forecast> getCityWeatherEvolution(int cityId, LocalDate from, LocalDate to) throws SQLException {
@@ -256,6 +288,34 @@ public class ForecastService {
                     f.setUvIndex(rs.getInt("indice_uv"));
                     f.setIconType(rs.getString("pictograma"));
                     list.add(f);
+                }
+            }
+        }
+        return list;
+    }
+
+    public List<HourlyForecast> getHourlyForecasts(int cityId, LocalDate date) throws SQLException {
+        List<HourlyForecast> list = new ArrayList<>();
+        String sql = "SELECT city_id, forecast_date, hour, temperature, humidity, wind_speed, " +
+                     "precipitation_probability, weather_code, icon_type " +
+                     "FROM hourly_forecasts WHERE city_id = ? AND forecast_date = ? ORDER BY hour";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, cityId);
+            stmt.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    HourlyForecast h = new HourlyForecast();
+                    h.setCityId(rs.getInt("city_id"));
+                    h.setForecastDate(rs.getDate("forecast_date").toLocalDate());
+                    h.setHour(rs.getInt("hour"));
+                    h.setTemperature(rs.getDouble("temperature"));
+                    h.setHumidity(rs.getInt("humidity"));
+                    h.setWindSpeed(rs.getDouble("wind_speed"));
+                    h.setPrecipProbability(rs.getInt("precipitation_probability"));
+                    h.setWeatherCode(rs.getInt("weather_code"));
+                    h.setIconType(rs.getString("icon_type"));
+                    list.add(h);
                 }
             }
         }

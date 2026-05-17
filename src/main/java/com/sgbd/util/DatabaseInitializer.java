@@ -23,32 +23,91 @@ public final class DatabaseInitializer {
 
     /**
      * Ruleaza intregul proces de initializare: migratii, seeds, proceduri.
+     * Daca schema este deja la zi, sare peste migratii pentru a reduce zgomotul in log.
      *
      * @return true daca initializarea a reusit, false altfel
      */
     public static boolean initialize() {
-        logger.info("Se initializeaza baza de date...");
         try {
-            // Verifica conexiunea
             try (Connection conn = DatabaseConnection.getConnection()) {
-                logger.info("Conexiune la PostgreSQL reusita: " + conn.getMetaData().getURL());
+                String url = conn.getMetaData().getURL();
+
+                if (isSchemaCurrent(conn)) {
+                    logger.info("Baza de date este deja initializata — se sare peste migratii.");
+                    return true;
+                }
+
+                logger.info("Se initializeaza baza de date...");
+                logger.info("Conexiune la PostgreSQL reusita: " + url);
+
+                runMigrations();
+
+                if (!isDatabasePopulated()) {
+                    runSeeds();
+                }
+
+                runProcedures();
+                recordSchemaVersion(conn);
+
+                logger.info("Initializare baza de date completa.");
+                return true;
             }
-
-            // Ruleaza migratiile
-            runMigrations();
-
-            // Ruleaza seed-urile
-            runSeeds();
-
-            // Ruleaza procedurile stocate
-            runProcedures();
-
-            logger.info("Initializare baza de date completa.");
-            return true;
         } catch (Exception e) {
             logger.severe("Eroare la initializarea bazei de date: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    private static boolean isSchemaCurrent(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '_schema_version')")) {
+            if (!rs.next() || !rs.getBoolean(1)) {
+                return false;
+            }
+        }
+        String currentHash = computeMigrationsHash();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT version_hash FROM _schema_version WHERE id = 1")) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return currentHash.equals(rs.getString(1));
+            }
+        }
+        return false;
+    }
+
+    private static void recordSchemaVersion(Connection conn) throws SQLException {
+        String hash = computeMigrationsHash();
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS _schema_version (id INTEGER PRIMARY KEY, version_hash VARCHAR(64), applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+        }
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO _schema_version (id, version_hash) VALUES (1, ?) ON CONFLICT (id) DO UPDATE SET version_hash = EXCLUDED.version_hash, applied_at = CURRENT_TIMESTAMP")) {
+            stmt.setString(1, hash);
+            stmt.executeUpdate();
+        }
+    }
+
+    private static String computeMigrationsHash() {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            List<Path> files = Files.list(Path.of(MIGRATIONS_DIR))
+                .filter(p -> p.toString().endsWith(".sql"))
+                .sorted()
+                .collect(Collectors.toList());
+            for (Path f : files) {
+                md.update(Files.readString(f).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            byte[] digest = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
         }
     }
 
@@ -107,7 +166,7 @@ public final class DatabaseInitializer {
                     // Ignora erorile de tip "already exists" pentru idempotenta
                     String msg = e.getMessage().toLowerCase();
                     if (msg.contains("already exists") || msg.contains("duplicate") || msg.contains("conflict")) {
-                        logger.warning("Ignorat (exista deja): " + e.getMessage());
+                        // Expected during idempotent migrations — no need to log
                     } else {
                         throw e;
                     }

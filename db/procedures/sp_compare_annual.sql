@@ -17,12 +17,12 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 'anual'::VARCHAR,
-           ROUND(AVG(f.temp_min)::numeric, 1),
-           ROUND(AVG(f.temp_max)::numeric, 1),
-           ROUND(AVG((f.temp_min + f.temp_max) / 2.0)::numeric, 1),
-           ROUND(AVG(h.temp_min)::numeric, 1),
-           ROUND(AVG(h.temp_max)::numeric, 1),
-           ROUND(AVG((h.temp_min + h.temp_max) / 2.0)::numeric, 1)
+           ROUND(AVG(f.temp_min)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG(f.temp_max)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG((f.temp_min + f.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG(h.temp_min)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG(h.temp_max)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG((h.temp_min + h.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION
     FROM forecasts f
     CROSS JOIN (
         SELECT temp_min, temp_max FROM forecasts

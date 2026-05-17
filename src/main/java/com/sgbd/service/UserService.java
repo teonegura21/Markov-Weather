@@ -167,6 +167,24 @@ public class UserService {
         return list;
     }
 
+    public List<User> getAllUsers() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT id, username, reputation, created_at FROM users ORDER BY id";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setUsername(rs.getString("username"));
+                u.setReputation(rs.getDouble("reputation"));
+                u.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                list.add(u);
+            }
+        }
+        return list;
+    }
+
     static String sha256(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

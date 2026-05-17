@@ -41,6 +41,23 @@ public class CityService {
         return list;
     }
 
+    public City getCityById(int cityId) throws SQLException {
+        String sql = "SELECT c.id, c.name, c.country_id, co.name AS country_name, " +
+                     "c.latitude, c.longitude, c.is_important " +
+                     "FROM cities c JOIN countries co ON c.country_id = co.id " +
+                     "WHERE c.id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, cityId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapCity(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public List<City> getAllCities() throws SQLException {
         List<City> list = new ArrayList<>();
         String sql = "SELECT c.id, c.name, c.country_id, co.name AS country_name, " +
@@ -53,8 +70,27 @@ public class CityService {
             while (rs.next()) {
                 list.add(mapCity(rs));
             }
+        } catch (SQLException e) {
+            throw translateException(e);
         }
         return list;
+    }
+
+    /**
+     * Traduce excepțiile SQL în mesaje distincte pe baza SQLState.
+     */
+    private SQLException translateException(SQLException e) {
+        String state = e.getSQLState();
+        if ("P0001".equals(state)) {
+            return new SQLException("Eroare validare PL/SQL: " + e.getMessage(), "PLSQL_RAISE", e);
+        }
+        if ("23503".equals(state)) {
+            return new SQLException("Referință invalidă: țara asociată orașului nu există.", "FK_VIOLATION", e);
+        }
+        if ("23505".equals(state)) {
+            return new SQLException("Duplicat: un oraș cu aceste date există deja.", "UNIQUE_VIOLATION", e);
+        }
+        return e;
     }
 
     City mapCity(ResultSet rs) throws SQLException {

@@ -14,6 +14,8 @@ CREATE OR REPLACE FUNCTION sp_get_map_data(
     longitudine DOUBLE PRECISION,
     temp_min DOUBLE PRECISION,
     temp_max DOUBLE PRECISION,
+    viteza_vant DOUBLE PRECISION,
+    umiditate INTEGER,
     pictograma VARCHAR
 )
 LANGUAGE plpgsql
@@ -28,6 +30,8 @@ BEGIN
         ci.longitude,
         f.temp_min,
         f.temp_max,
+        f.wind_speed,
+        f.humidity,
         f.icon_type::VARCHAR
     FROM forecasts f
     JOIN cities ci ON f.city_id = ci.id

@@ -1,0 +1,220 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+title Diagrama Entitate-Relație — Prognoza Meteo
+
+class countries {
+    +id : SERIAL <<PK>>
+    +name : VARCHAR(100) <<UNIQUE, NOT NULL>>
+    +code : VARCHAR(3) <<UNIQUE, NOT NULL>>
+    +continent : VARCHAR(30) <<NOT NULL>>
+    +created_at : TIMESTAMP
+}
+
+class cities {
+    +id : SERIAL <<PK>>
+    +name : VARCHAR(200) <<NOT NULL>>
+    +country_id : INTEGER <<FK, NOT NULL>>
+    +latitude : DECIMAL(8,5) <<NOT NULL>>
+    +longitude : DECIMAL(8,5) <<NOT NULL>>
+    +population : INTEGER
+    +is_major : BOOLEAN
+    +created_at : TIMESTAMP
+}
+
+class forecasts {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +date : DATE <<NOT NULL>>
+    +temp_min : DOUBLE PRECISION <<NOT NULL>>
+    +temp_max : DOUBLE PRECISION <<NOT NULL>>
+    +wind_speed : DOUBLE PRECISION <<NOT NULL>>
+    +icon_type : VARCHAR(30) <<NOT NULL>>
+    +uv_index : INTEGER <<NOT NULL>>
+    +humidity : INTEGER <<CHECK 0-100>>
+    +warning_text : TEXT
+    +precipitation_sum : DOUBLE PRECISION
+    +precipitation_hours : DOUBLE PRECISION
+    +pressure_mean : DOUBLE PRECISION
+    +sunshine_hours : DOUBLE PRECISION
+    +dew_point : DOUBLE PRECISION
+    +created_at : TIMESTAMP
+    +updated_at : TIMESTAMP
+}
+
+class hourly_forecasts {
+    +id : BIGSERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +forecast_date : DATE <<NOT NULL>>
+    +hour : INTEGER <<CHECK 0-23, NOT NULL>>
+    +temperature : DOUBLE PRECISION <<NOT NULL>>
+    +humidity : INTEGER <<CHECK 0-100>>
+    +wind_speed : DOUBLE PRECISION
+    +precipitation_probability : INTEGER <<CHECK 0-100>>
+    +weather_code : INTEGER
+    +icon_type : VARCHAR(30)
+    +created_at : TIMESTAMP
+}
+
+class users {
+    +id : SERIAL <<PK>>
+    +username : VARCHAR(50) <<UNIQUE, NOT NULL>>
+    +password_hash : VARCHAR(64) <<NOT NULL>>
+    +email : VARCHAR(100)
+    +reputation : DOUBLE PRECISION
+    +created_at : TIMESTAMP
+}
+
+class votes {
+    +id : SERIAL <<PK>>
+    +user_id : INTEGER <<FK, NOT NULL>>
+    +forecast_id : INTEGER <<FK, NOT NULL>>
+    +is_accurate : BOOLEAN <<NOT NULL>>
+    +created_at : TIMESTAMP
+}
+
+class comments {
+    +id : SERIAL <<PK>>
+    +user_id : INTEGER <<FK, NOT NULL>>
+    +forecast_id : INTEGER <<FK, NOT NULL>>
+    +parent_comment_id : INTEGER <<FK>>
+    +comment_text : TEXT <<NOT NULL>>
+    +created_at : TIMESTAMP
+}
+
+class weather_vectors {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +forecast_date : DATE <<NOT NULL>>
+    +vector : DOUBLE PRECISION[] <<NOT NULL>>
+    +recipe_scores : JSONB
+}
+
+class weather_regimes {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +regime_id : INTEGER <<NOT NULL>>
+    +label : VARCHAR(50)
+    +centroid : DOUBLE PRECISION[]
+    +season : VARCHAR(20)
+}
+
+class daily_regimes {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +forecast_date : DATE <<NOT NULL>>
+    +regime_id : INTEGER <<NOT NULL>>
+}
+
+class markov_transitions {
+    +id : SERIAL <<PK>>
+    +climate_zone : VARCHAR(30)
+    +season : VARCHAR(20)
+    +r_prev : INTEGER
+    +r_curr : INTEGER
+    +r_next : INTEGER
+    +probability : DOUBLE PRECISION
+}
+
+class hidden_states {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +state_id : INTEGER
+    +initial_prob : DOUBLE PRECISION
+    +emission_probs : DOUBLE PRECISION[]
+}
+
+class hidden_transitions {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +from_state : INTEGER
+    +to_state : INTEGER
+    +probability : DOUBLE PRECISION
+}
+
+class monte_carlo_predictions {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +forecast_date : DATE <<NOT NULL>>
+    +horizon_day : INTEGER <<CHECK 1-10>>
+    +p10_temp_min : DOUBLE PRECISION
+    +p50_temp_min : DOUBLE PRECISION
+    +p90_temp_min : DOUBLE PRECISION
+    +p10_temp_max : DOUBLE PRECISION
+    +p50_temp_max : DOUBLE PRECISION
+    +p90_temp_max : DOUBLE PRECISION
+    +confidence : DOUBLE PRECISION
+    +generated_at : TIMESTAMP
+}
+
+class seasonal_climatology {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +day_of_year : INTEGER
+    +temp_min_mean : DOUBLE PRECISION
+    +temp_max_mean : DOUBLE PRECISION
+    +humidity_mean : DOUBLE PRECISION
+    +wind_mean : DOUBLE PRECISION
+}
+
+class prediction_accuracy {
+    +id : SERIAL <<PK>>
+    +city_id : INTEGER <<FK, NOT NULL>>
+    +horizon_day : INTEGER
+    +mae_temp_min : DOUBLE PRECISION
+    +mae_temp_max : DOUBLE PRECISION
+    +computed_at : TIMESTAMP
+}
+
+class forecast_log {
+    +id : SERIAL <<PK>>
+    +forecast_id : INTEGER <<FK>>
+    +old_values : JSONB
+    +new_values : JSONB
+    +changed_at : TIMESTAMP
+}
+
+' Relationships
+countries "1" --> "0..*" cities : conține
+cities "1" --> "0..*" forecasts : are prognoze
+cities "1" --> "0..*" hourly_forecasts : are prognoze orare
+cities "1" --> "0..*" weather_vectors : are vectori
+cities "1" --> "0..*" weather_regimes : are regimuri
+cities "1" --> "0..*" daily_regimes : are regimuri zilnice
+cities "1" --> "0..*" hidden_states : are stări HMM
+cities "1" --> "0..*" hidden_transitions : are tranziții HMM
+cities "1" --> "0..*" monte_carlo_predictions : are predicții MC
+cities "1" --> "0..*" seasonal_climatology : are climatologie
+cities "1" --> "0..*" prediction_accuracy : are acuratețe
+forecasts "1" --> "0..*" votes : primește voturi
+forecasts "1" --> "0..*" comments : primește comentarii
+forecasts "1" --> "0..*" forecast_log : generează loguri
+users "1" --> "0..*" votes : acordă
+users "1" --> "0..*" comments : scrie
+comments "1" --> "0..*" comments : răspuns (self-ref)
+
+note right of forecasts
+    Constrângeri:
+    • UNIQUE(city_id, date)
+    • CHECK(humidity BETWEEN 0 AND 100)
+    • CHECK(temp_min <= temp_max)
+end note
+
+note right of markov_transitions
+    Tensor Markov de ordin 2:
+    P(r_next | r_prev, r_curr)
+end note
+
+note bottom of monte_carlo_predictions
+    Percentile extrase din
+    5000 de traiectorii simulate
+end note
+
+@enduml

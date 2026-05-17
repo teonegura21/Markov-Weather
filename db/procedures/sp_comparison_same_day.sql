@@ -28,12 +28,12 @@ BEGIN
     RETURN QUERY
     SELECT 'aceeasi_zi_ani_diferiti'::VARCHAR,
            f.temp_min, f.temp_max,
-           ROUND(AVG(h.temp_min)::numeric, 1),
-           ROUND(AVG(h.temp_max)::numeric, 1),
-           ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1),
-           ROUND((AVG((h.temp_min + h.temp_max) / 2.0))::numeric, 1),
-           ROUND((f.temp_min - AVG(h.temp_min))::numeric, 1),
-           ROUND((f.temp_max - AVG(h.temp_max))::numeric, 1)
+           ROUND(AVG(h.temp_min)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG(h.temp_max)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION,
+           ROUND((AVG((h.temp_min + h.temp_max) / 2.0))::numeric, 1)::DOUBLE PRECISION,
+           ROUND((f.temp_min - AVG(h.temp_min))::numeric, 1)::DOUBLE PRECISION,
+           ROUND((f.temp_max - AVG(h.temp_max))::numeric, 1)::DOUBLE PRECISION
     FROM forecasts f
     CROSS JOIN (
         SELECT temp_min, temp_max FROM forecasts
@@ -57,12 +57,12 @@ BEGIN
     RETURN QUERY
     SELECT 'sezonier'::VARCHAR,
            f.temp_min, f.temp_max,
-           ROUND(AVG(h.temp_min)::numeric, 1),
-           ROUND(AVG(h.temp_max)::numeric, 1),
-           ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1),
-           ROUND((AVG((h.temp_min + h.temp_max) / 2.0))::numeric, 1),
-           ROUND((f.temp_min - AVG(h.temp_min))::numeric, 1),
-           ROUND((f.temp_max - AVG(h.temp_max))::numeric, 1)
+           ROUND(AVG(h.temp_min)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(AVG(h.temp_max)::numeric, 1)::DOUBLE PRECISION,
+           ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION,
+           ROUND((AVG((h.temp_min + h.temp_max) / 2.0))::numeric, 1)::DOUBLE PRECISION,
+           ROUND((f.temp_min - AVG(h.temp_min))::numeric, 1)::DOUBLE PRECISION,
+           ROUND((f.temp_max - AVG(h.temp_max))::numeric, 1)::DOUBLE PRECISION
     FROM forecasts f
     CROSS JOIN (
         SELECT temp_min, temp_max FROM forecasts

@@ -21,8 +21,8 @@ BEGIN
         EXTRACT(DAY FROM f.date)::INTEGER,
         f.temp_min,
         f.temp_max,
-        ROUND(AVG(h.temp_min)::numeric, 1),
-        ROUND(AVG(h.temp_max)::numeric, 1)
+        ROUND(AVG(h.temp_min)::numeric, 1)::DOUBLE PRECISION,
+        ROUND(AVG(h.temp_max)::numeric, 1)::DOUBLE PRECISION
     FROM forecasts f
     LEFT JOIN forecasts h ON h.city_id = p_city_id
         AND EXTRACT(MONTH FROM h.date) = p_month

@@ -1,5 +1,6 @@
 package com.sgbd.service.prediction;
 
+import com.sgbd.util.ClimateZoneUtil;
 import com.sgbd.util.DatabaseConnection;
 
 import java.sql.*;
@@ -153,11 +154,23 @@ public class PredictionEngineService {
         return results;
     }
 
-    private String getClimateZoneForCity(int cityId) {
-        return "romania";
+    private String getClimateZoneForCity(int cityId) throws SQLException {
+        String sql = "SELECT latitude, longitude FROM cities WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, cityId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double lat = rs.getDouble("latitude");
+                    double lon = rs.getDouble("longitude");
+                    return ClimateZoneUtil.classify(lat, lon);
+                }
+            }
+        }
+        return ClimateZoneUtil.EUROPE_WIDE;
     }
 
-    void computeSeasonalClimatology(int cityId) throws SQLException {
+    public void computeSeasonalClimatology(int cityId) throws SQLException {
         String sql = "SELECT sp_compute_seasonal_climatology(?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

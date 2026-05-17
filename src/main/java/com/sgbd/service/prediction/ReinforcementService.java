@@ -42,7 +42,7 @@ public class ReinforcementService {
             currentIteration.set(iteration);
             try {
                 double accuracyBefore = computeOverallAccuracy(cityId, 30);
-                adjustMarkovWeights("romania");
+                adjustMarkovWeights(com.sgbd.util.ClimateZoneUtil.EUROPE_WIDE);
                 adjustHMMEmissions(cityId);
                 double accuracyAfter = computeOverallAccuracy(cityId, 30);
                 logger.info("Iteratia " + iteration + " completa: acuratete inainte="

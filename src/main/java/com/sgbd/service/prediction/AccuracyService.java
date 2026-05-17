@@ -53,7 +53,7 @@ public class AccuracyService {
             actual.setTempMax(dw.tempMax);
             actual.setWindSpeed(dw.windSpeed);
             actual.setHumidity(dw.humidity);
-            actual.setPrecipSum(0); // nu avem precip sum in DailyWeather
+            actual.setPrecipSum(dw.precipSum);
             actual.setIconType(deriveIcon(dw.tempMin, dw.tempMax, dw.humidity, dw.windSpeed, dw.uvIndex));
             return actual;
 

@@ -13,8 +13,8 @@ import com.sgbd.util.LoggerUtil;
 
 public class WeatherImporterService {
     private static final Logger logger = LoggerUtil.getLogger(WeatherImporterService.class);
-    private static final int API_DELAY_MS = 250;
-    private static final int MAX_API_CALLS_PER_RUN = 50;
+    private static final int API_DELAY_MS = 100;
+    private static final int MAX_API_CALLS_PER_RUN = 200;
     private static final int STALE_THRESHOLD_HOURS = 24;
 
     private final WeatherApiService apiService = new WeatherApiService();
@@ -119,6 +119,7 @@ public class WeatherImporterService {
         }
 
         generateWarningsForPeriod(today, today.plusDays(days));
+        callAutoWarnUsers();
         return total;
     }
 
@@ -202,13 +203,21 @@ public class WeatherImporterService {
     private ImportResult upsertForecasts(int cityId, List<WeatherApiService.DailyWeather> data, String source) {
         ImportResult result = new ImportResult();
 
-        String sql = "INSERT INTO forecasts (city_id, date, temp_min, temp_max, wind_speed, icon_type, uv_index, humidity, warning_text, data_source, fetched_at) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, CURRENT_TIMESTAMP) " +
-                     "ON CONFLICT (city_id, date) DO UPDATE SET " +
+        String sql = "INSERT INTO forecasts (city_id, date, temp_min, temp_max, wind_speed, " +
+                     "icon_type, uv_index, humidity, precipitation_sum, precipitation_hours, " +
+                     "pressure_mean, sunshine_hours, dew_point, warning_text, data_source, " +
+                     "fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, " +
+                     "CURRENT_TIMESTAMP) ON CONFLICT (city_id, date) DO UPDATE SET " +
                      "temp_min = EXCLUDED.temp_min, temp_max = EXCLUDED.temp_max, " +
                      "wind_speed = EXCLUDED.wind_speed, icon_type = EXCLUDED.icon_type, " +
                      "uv_index = EXCLUDED.uv_index, humidity = EXCLUDED.humidity, " +
-                     "data_source = EXCLUDED.data_source, fetched_at = EXCLUDED.fetched_at, " +
+                     "precipitation_sum = EXCLUDED.precipitation_sum, " +
+                     "precipitation_hours = EXCLUDED.precipitation_hours, " +
+                     "pressure_mean = EXCLUDED.pressure_mean, " +
+                     "sunshine_hours = EXCLUDED.sunshine_hours, " +
+                     "dew_point = EXCLUDED.dew_point, " +
+                     "data_source = EXCLUDED.data_source, " +
+                     "fetched_at = EXCLUDED.fetched_at, " +
                      "updated_at = CURRENT_TIMESTAMP";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -224,7 +233,12 @@ public class WeatherImporterService {
                 stmt.setString(6, icon);
                 stmt.setInt(7, dw.uvIndex);
                 stmt.setInt(8, dw.humidity);
-                stmt.setString(9, source);
+                stmt.setDouble(9, round(dw.precipSum));
+                stmt.setDouble(10, round(dw.precipitationHours));
+                stmt.setDouble(11, round(dw.pressureMean));
+                stmt.setDouble(12, round(dw.sunshineHours));
+                stmt.setDouble(13, round(dw.dewPoint));
+                stmt.setString(14, source);
                 stmt.addBatch();
                 result.imported++;
             }
@@ -268,8 +282,67 @@ public class WeatherImporterService {
         }
     }
 
+    private void callAutoWarnUsers() {
+        String sql = "CALL sp_auto_warn_users()";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.execute();
+        } catch (SQLException e) {
+            logger.warning("Eroare la avertizarea automată a utilizatorilor: " + e.getMessage());
+        }
+    }
+
     private void throttle() {
         try { Thread.sleep(API_DELAY_MS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+    }
+
+    public ImportResult importHourlyForecastForCity(int cityId, double lat, double lon, int days) {
+        List<WeatherApiService.HourlyWeather> data = apiService.fetchHourlyForecast(lat, lon, days);
+        return upsertHourlyForecasts(cityId, data);
+    }
+
+    private ImportResult upsertHourlyForecasts(int cityId, List<WeatherApiService.HourlyWeather> data) {
+        ImportResult result = new ImportResult();
+        String sql = "INSERT INTO hourly_forecasts (city_id, forecast_date, hour, temperature, humidity, wind_speed, precipitation_probability, weather_code, icon_type) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                     "ON CONFLICT (city_id, forecast_date, hour) DO UPDATE SET " +
+                     "temperature = EXCLUDED.temperature, humidity = EXCLUDED.humidity, " +
+                     "wind_speed = EXCLUDED.wind_speed, precipitation_probability = EXCLUDED.precipitation_probability, " +
+                     "weather_code = EXCLUDED.weather_code, icon_type = EXCLUDED.icon_type";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (WeatherApiService.HourlyWeather hw : data) {
+                stmt.setInt(1, cityId);
+                stmt.setDate(2, Date.valueOf(hw.date));
+                stmt.setInt(3, hw.hour);
+                stmt.setDouble(4, round(hw.temperature));
+                stmt.setInt(5, hw.humidity);
+                stmt.setDouble(6, round(hw.windSpeed));
+                stmt.setInt(7, hw.precipProbability);
+                stmt.setInt(8, hw.weatherCode);
+                stmt.setString(9, wmoCodeToIcon(hw.weatherCode));
+                stmt.addBatch();
+                result.imported++;
+            }
+            stmt.executeBatch();
+        } catch (SQLException e) {
+            logger.severe("Eroare upsert hourly pentru orașul " + cityId + ": " + e.getMessage());
+            result.errors = result.imported;
+            result.imported = 0;
+        }
+        return result;
+    }
+
+    static String wmoCodeToIcon(int code) {
+        return switch (code) {
+            case 0 -> "sunny";
+            case 1, 2, 3 -> "partly_cloudy";
+            case 45, 48 -> "fog";
+            case 51, 53, 55, 61, 63, 65, 80, 81, 82 -> "rain";
+            case 71, 73, 75, 77, 85, 86 -> "snow";
+            case 95, 96, 99 -> "storm";
+            default -> "cloudy";
+        };
     }
 
     static String deriveIcon(double tempMin, double tempMax, int humidity, double wind, int uv) {

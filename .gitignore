@@ -18,3 +18,7 @@ Thumbs.db
 
 # Environment
 .env
+# Generated files
+cp.txt
+dependency-reduced-pom.xml
+prognoza-meteo-architecture.html

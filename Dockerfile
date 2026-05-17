@@ -16,7 +16,7 @@ FROM eclipse-temurin:21-jre
 
 # Instalează librăriile necesare pentru JavaFX în mediu headless/GUI
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libgtk-3-0 \
     libx11-6 \
     && rm -rf /var/lib/apt/lists/*

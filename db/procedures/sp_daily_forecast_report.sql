@@ -24,17 +24,17 @@ BEGIN
         f.date,
         f.temp_min,
         f.temp_max,
-        ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1) AS temp_avg,
+        ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION AS temp_avg,
         f.wind_speed,
         f.icon_type::VARCHAR,
         f.uv_index,
         f.humidity,
         f.warning_text,
         COUNT(v.id),
-        COUNT(v.id) FILTER (WHERE v.is_accurate = TRUE),
+        COUNT(v.id) FILTER (WHERE v.is_accurate = TRUE)::INTEGER,
         CASE WHEN COUNT(v.id) > 0
-            THEN ROUND((COUNT(v.id) FILTER (WHERE v.is_accurate = TRUE) * 100.0 / COUNT(v.id))::numeric, 1)
-            ELSE 0
+            THEN ROUND((COUNT(v.id) FILTER (WHERE v.is_accurate = TRUE) * 100.0 / COUNT(v.id))::numeric, 1)::DOUBLE PRECISION
+            ELSE 0::DOUBLE PRECISION
         END,
         COUNT(DISTINCT c.id)
     FROM forecasts f

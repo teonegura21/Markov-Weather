@@ -71,6 +71,13 @@ public class StartupOrchestratorService {
         StartupResult result = new StartupResult();
         logger.info("=== PORNESC MENTENANTA STARTUP ===");
 
+        // VERIFICARE RAPIDA: daca datele sunt deja la zi, nu mai facem nimic
+        if (isDataFresh()) {
+            result.message = "Datele sunt deja la zi (prognoza și predicțiile există pentru azi). Sar peste mentenanță.";
+            logger.info(result.message);
+            return result;
+        }
+
         // 1. Detectează și importă gap-ul istoric
         LocalDate lastHistorical = getLastHistoricalDate();
         LocalDate yesterday = LocalDate.now().minusDays(1);
@@ -150,6 +157,30 @@ public class StartupOrchestratorService {
     }
 
     /**
+     * Verifică dacă datele sunt suficient de proaspete încât să putem sărim peste mentenanță.
+     * Condiții: există prognoză forecast importată azi și există predicții Monte Carlo generate azi.
+     */
+    private boolean isDataFresh() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+            // Verifică dacă există prognoză forecast cu fetched_at = azi
+            try (ResultSet rs = stmt.executeQuery(
+                "SELECT EXISTS(SELECT 1 FROM forecasts WHERE data_source = 'forecast_api' AND fetched_at::date = CURRENT_DATE LIMIT 1)")) {
+                if (!rs.next() || !rs.getBoolean(1)) return false;
+            }
+            // Verifică dacă există predicții Monte Carlo generate azi
+            try (ResultSet rs = stmt.executeQuery(
+                "SELECT EXISTS(SELECT 1 FROM monte_carlo_predictions WHERE generated_at::date = CURRENT_DATE LIMIT 1)")) {
+                if (!rs.next() || !rs.getBoolean(1)) return false;
+            }
+            return true;
+        } catch (SQLException e) {
+            logger.warning("Eroare la verificarea prospețimii datelor: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Returnează ultima dată istorică disponibilă în baza de date.
      */
     private LocalDate getLastHistoricalDate() {
@@ -214,8 +245,8 @@ public class StartupOrchestratorService {
             logger.warning("Eroare clustering: " + e.getMessage());
         }
 
-        // Markov (per zonă climatică)
-        String climateZone = "romania";
+        // Markov (per zonă climatică — întreaga Europă într-o singură zonă pentru clustering global)
+        String climateZone = com.sgbd.util.ClimateZoneUtil.EUROPE_WIDE;
         try {
             markovService.buildTransitionTensor(climateZone);
             markovService.addStructuralZeros();

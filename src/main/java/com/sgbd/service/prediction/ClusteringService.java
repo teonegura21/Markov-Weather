@@ -51,7 +51,7 @@ public class ClusteringService {
             new KMeansPlusPlusClusterer<>(k, MAX_ITERATIONS, new EuclideanDistance());
         List<CentroidCluster<WeatherDataPoint>> clusters = clusterer.cluster(points);
 
-        String climateZone = "romania";
+        String climateZone = com.sgbd.util.ClimateZoneUtil.EUROPE_WIDE;
         saveCentroids(clusters, climateZone, means, stds);
         saveLabels(points, clusters, climateZone);
     }
@@ -82,7 +82,7 @@ public class ClusteringService {
         return points;
     }
 
-    private void computeStats(List<WeatherDataPoint> points, double[] means, double[] stds) {
+    void computeStats(List<WeatherDataPoint> points, double[] means, double[] stds) {
         int n = points.size();
         Arrays.fill(means, 0.0);
         for (WeatherDataPoint p : points) {
@@ -107,7 +107,7 @@ public class ClusteringService {
         }
     }
 
-    private void standardize(List<WeatherDataPoint> points, double[] means, double[] stds) {
+    void standardize(List<WeatherDataPoint> points, double[] means, double[] stds) {
         for (WeatherDataPoint p : points) {
             double[] pt = p.getPoint();
             for (int i = 0; i < DIMENSIONS; i++) {
@@ -189,15 +189,14 @@ public class ClusteringService {
 
     private void saveLabels(List<WeatherDataPoint> points, List<CentroidCluster<WeatherDataPoint>> clusters,
                             String climateZone) throws SQLException {
-        String deleteSql = "DELETE FROM daily_regimes WHERE climate_zone = ?";
+        String deleteSql = "DELETE FROM daily_regimes";
         String insertSql = "INSERT INTO daily_regimes (city_id, date, regime_id, climate_zone) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement delStmt = conn.prepareStatement(deleteSql);
+             Statement delStmt = conn.createStatement();
              PreparedStatement insStmt = conn.prepareStatement(insertSql)) {
 
-            delStmt.setString(1, climateZone);
-            delStmt.executeUpdate();
+            delStmt.executeUpdate(deleteSql);
 
             for (WeatherDataPoint p : points) {
                 int bestRegime = findNearestCluster(p, clusters);
@@ -211,7 +210,7 @@ public class ClusteringService {
         }
     }
 
-    private int findNearestCluster(WeatherDataPoint p, List<CentroidCluster<WeatherDataPoint>> clusters) {
+    int findNearestCluster(WeatherDataPoint p, List<CentroidCluster<WeatherDataPoint>> clusters) {
         double minDist = Double.MAX_VALUE;
         int best = 0;
         EuclideanDistance dist = new EuclideanDistance();
@@ -258,7 +257,7 @@ public class ClusteringService {
         }
     }
 
-    private String inferLabel(Double[] centroid) {
+    String inferLabel(Double[] centroid) {
         double tempMax = centroid[1];
         double tempAvg = centroid[2];
         double wind = centroid[10];
@@ -372,7 +371,7 @@ public class ClusteringService {
         return n > 0 ? totalScore / n : 0.0;
     }
 
-    private static class WeatherDataPoint implements Clusterable {
+    static class WeatherDataPoint implements Clusterable {
         private final int cityId;
         private final LocalDate date;
         private final double[] point;

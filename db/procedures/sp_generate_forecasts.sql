@@ -17,6 +17,10 @@ DECLARE
     v_icon VARCHAR(30);
     v_month INTEGER;
 BEGIN
+    IF p_year IS NULL OR p_year < 1900 OR p_year > 2100 THEN
+        RAISE EXCEPTION 'Anul trebuie să fie între 1900 și 2100, primit: %', p_year;
+    END IF;
+
     FOR v_city IN SELECT id FROM cities LOOP
         v_day := make_date(p_year, 1, 1);
         WHILE EXTRACT(YEAR FROM v_day) = p_year LOOP

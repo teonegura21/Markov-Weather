@@ -20,7 +20,7 @@ BEGIN
         RETURN QUERY
         SELECT ROW_NUMBER() OVER (ORDER BY AVG(f.temp_max) DESC),
                ci.name::VARCHAR, co.name::VARCHAR,
-               ROUND(AVG(f.temp_max)::numeric, 1), '°C'::VARCHAR
+               ROUND(AVG(f.temp_max)::numeric, 1)::DOUBLE PRECISION, '°C'::VARCHAR
         FROM forecasts f
         JOIN cities ci ON f.city_id = ci.id
         JOIN countries co ON ci.country_id = co.id
@@ -32,7 +32,7 @@ BEGIN
         RETURN QUERY
         SELECT ROW_NUMBER() OVER (ORDER BY AVG(f.temp_min)),
                ci.name::VARCHAR, co.name::VARCHAR,
-               ROUND(AVG(f.temp_min)::numeric, 1), '°C'::VARCHAR
+               ROUND(AVG(f.temp_min)::numeric, 1)::DOUBLE PRECISION, '°C'::VARCHAR
         FROM forecasts f
         JOIN cities ci ON f.city_id = ci.id
         JOIN countries co ON ci.country_id = co.id
@@ -44,7 +44,7 @@ BEGIN
         RETURN QUERY
         SELECT ROW_NUMBER() OVER (ORDER BY AVG(f.wind_speed) DESC),
                ci.name::VARCHAR, co.name::VARCHAR,
-               ROUND(AVG(f.wind_speed)::numeric, 1), 'km/h'::VARCHAR
+               ROUND(AVG(f.wind_speed)::numeric, 1)::DOUBLE PRECISION, 'km/h'::VARCHAR
         FROM forecasts f
         JOIN cities ci ON f.city_id = ci.id
         JOIN countries co ON ci.country_id = co.id
@@ -56,7 +56,7 @@ BEGIN
         RETURN QUERY
         SELECT ROW_NUMBER() OVER (ORDER BY AVG(f.humidity) DESC),
                ci.name::VARCHAR, co.name::VARCHAR,
-               ROUND(AVG(f.humidity)::numeric, 1), '%'::VARCHAR
+               ROUND(AVG(f.humidity)::numeric, 1)::DOUBLE PRECISION, '%'::VARCHAR
         FROM forecasts f
         JOIN cities ci ON f.city_id = ci.id
         JOIN countries co ON ci.country_id = co.id
@@ -81,7 +81,7 @@ BEGIN
         RETURN QUERY
         SELECT ROW_NUMBER() OVER (ORDER BY (MAX(f.temp_max) - MIN(f.temp_min)) DESC),
                ci.name::VARCHAR, co.name::VARCHAR,
-               ROUND((MAX(f.temp_max) - MIN(f.temp_min))::numeric, 1),
+               ROUND((MAX(f.temp_max) - MIN(f.temp_min))::numeric, 1)::DOUBLE PRECISION,
                '°C amplitudine'::VARCHAR
         FROM forecasts f
         JOIN cities ci ON f.city_id = ci.id

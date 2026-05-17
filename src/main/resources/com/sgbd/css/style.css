@@ -412,3 +412,368 @@
     -fx-text-fill: #94a3b8;
     -fx-font-size: 12px;
 }
+
+/* ============================================================
+   Weather Dynamic Gradients
+   ============================================================ */
+.weather-clear {
+    -fx-background-color: linear-gradient(to bottom, #0c4a6e, #082f49);
+}
+.weather-cloudy {
+    -fx-background-color: linear-gradient(to bottom, #334155, #1e293b);
+}
+.weather-rain {
+    -fx-background-color: linear-gradient(to bottom, #1e3a5f, #0f172a);
+}
+.weather-storm {
+    -fx-background-color: linear-gradient(to bottom, #312e81, #1e1b4b);
+}
+.weather-snow {
+    -fx-background-color: linear-gradient(to bottom, #475569, #1e293b);
+}
+.weather-night {
+    -fx-background-color: linear-gradient(to bottom, #0c1220, #020617);
+}
+
+/* ============================================================
+   Tab Root & Content
+   ============================================================ */
+.tab-root {
+    -fx-background-color: transparent;
+}
+
+.tab-content {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.tab-loading {
+    -fx-progress-color: #38bdf8;
+}
+
+.tab-error {
+    -fx-text-fill: #fca5a5;
+    -fx-font-size: 14px;
+    -fx-padding: 20px;
+    -fx-background-color: rgba(239, 68, 68, 0.1);
+    -fx-background-radius: 12px;
+}
+
+/* ============================================================
+   Global App Header
+   ============================================================ */
+.app-header {
+    -fx-background-color: rgba(15, 23, 42, 0.85);
+    -fx-padding: 8px 20px;
+    -fx-border-color: transparent transparent rgba(148,163,184,0.1) transparent;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.app-header .app-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+}
+
+.app-header .header-city-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #94a3b8;
+}
+
+/* ============================================================
+   Commercial Weather Cards — Refined glassmorphism
+   ============================================================ */
+.weather-hero-card {
+    -fx-background-color: linear-gradient(to bottom right, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    -fx-background-radius: 28px;
+    -fx-padding: 36px 32px;
+    -fx-alignment: center;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-width: 1px;
+    -fx-border-radius: 28px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 24, 0, 0, 8);
+}
+
+.weather-hero-temp {
+    -fx-font-size: 80px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.weather-hero-condition {
+    -fx-font-size: 18px;
+    -fx-text-fill: #94a3b8;
+    -fx-letter-spacing: 0.5px;
+}
+
+.weather-hero-minmax {
+    -fx-font-size: 14px;
+    -fx-text-fill: #64748b;
+    -fx-font-weight: 500;
+}
+
+.weather-detail-grid {
+    -fx-hgap: 10px;
+    -fx-vgap: 10px;
+}
+
+.weather-detail-cell {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 18px;
+    -fx-padding: 14px 12px;
+    -fx-alignment: center;
+    -fx-min-width: 110px;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 1px;
+    -fx-border-radius: 18px;
+}
+
+.weather-detail-cell:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+}
+
+.weather-detail-icon {
+    -fx-font-size: 22px;
+    -fx-text-fill: #94a3b8;
+}
+
+.weather-detail-value {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+}
+
+.weather-detail-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748b;
+    -fx-letter-spacing: 0.8px;
+}
+
+/* Hourly scroll row */
+.hourly-row {
+    -fx-spacing: 10px;
+    -fx-padding: 6px 4px;
+}
+
+.hourly-card {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 20px;
+    -fx-padding: 14px 12px;
+    -fx-alignment: center;
+    -fx-min-width: 60px;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 1px;
+    -fx-border-radius: 20px;
+    -fx-cursor: hand;
+}
+
+.hourly-card:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);
+}
+
+.hourly-card-now {
+    -fx-background-color: rgba(56, 189, 248, 0.1);
+    -fx-border-color: rgba(56, 189, 248, 0.25);
+    -fx-border-width: 1px;
+    -fx-border-radius: 20px;
+}
+
+/* Daily forecast list */
+.daily-row {
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-radius: 18px;
+    -fx-padding: 12px 16px;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255, 255, 255, 0.04);
+    -fx-border-width: 1px;
+    -fx-border-radius: 18px;
+}
+
+.daily-row:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.daily-row-today {
+    -fx-background-color: rgba(56, 189, 248, 0.06);
+    -fx-border-color: rgba(56, 189, 248, 0.15);
+}
+
+.daily-day-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+    -fx-min-width: 60px;
+}
+
+.daily-condition {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94a3b8;
+}
+
+.daily-temp-bar {
+    -fx-background-radius: 4px;
+    -fx-min-height: 4px;
+    -fx-max-height: 4px;
+}
+
+.daily-temp-max {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+    -fx-min-width: 32px;
+}
+
+.daily-temp-min {
+    -fx-font-size: 14px;
+    -fx-text-fill: #64748b;
+    -fx-min-width: 32px;
+}
+
+/* Alert banner */
+.alert-banner {
+    -fx-background-color: rgba(251, 191, 36, 0.08);
+    -fx-background-radius: 14px;
+    -fx-padding: 10px 14px;
+    -fx-border-color: rgba(251, 191, 36, 0.2);
+    -fx-border-radius: 14px;
+    -fx-border-width: 1px;
+}
+
+.alert-banner .label {
+    -fx-text-fill: #fbbf24;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+}
+
+/* Section titles */
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f8fafc;
+    -fx-padding: 20px 0 10px 0;
+}
+
+/* Probability bars */
+.prob-bar-bg {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 4px;
+    -fx-min-height: 6px;
+    -fx-max-height: 6px;
+}
+
+.prob-bar-fill {
+    -fx-background-radius: 4px;
+    -fx-min-height: 6px;
+    -fx-max-height: 6px;
+}
+
+/* ============================================================
+   Bottom Navigation — Phone-style floating glass pill
+   ============================================================ */
+.bottom-nav {
+    -fx-background-color: rgba(15, 23, 42, 0.85);
+    -fx-background-radius: 24px;
+    -fx-padding: 6px 8px 6px 8px;
+    -fx-border-color: rgba(148, 163, 184, 0.12);
+    -fx-border-width: 1px;
+    -fx-border-radius: 24px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0, 0, 4);
+    -fx-spacing: 4px;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748b;
+    -fx-font-size: 10px;
+    -fx-padding: 6px 14px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-background-radius: 16px;
+}
+
+.nav-button:hover {
+    -fx-text-fill: #e2e8f0;
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+}
+
+.nav-button-active {
+    -fx-background-color: rgba(56, 189, 248, 0.12);
+    -fx-text-fill: #38bdf8;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 14px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-background-radius: 16px;
+}
+
+.nav-icon {
+    -fx-font-size: 22px;
+}
+
+/* ============================================================
+   Insights — Confidence Badge & Regime Label
+   ============================================================ */
+.confidence-badge {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #38bdf8;
+    -fx-background-color: rgba(56, 189, 248, 0.1);
+    -fx-background-radius: 20px;
+    -fx-padding: 8px 20px;
+    -fx-border-color: rgba(56, 189, 248, 0.3);
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+
+.regime-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #94a3b8;
+    -fx-padding: 4px 0;
+}
+
+/* ============================================================
+   Chart Cards
+   ============================================================ */
+.chart-card {
+    -fx-background-color: rgba(30, 41, 59, 0.6);
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: rgba(148, 163, 184, 0.12);
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 16, 0, 0, 6);
+    -fx-padding: 20px;
+    -fx-spacing: 12px;
+}
+
+/* ============================================================
+   Ranking Rows
+   ============================================================ */
+.ranking-row {
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-radius: 12px;
+    -fx-padding: 8px 14px;
+    -fx-alignment: center-left;
+    -fx-border-color: rgba(255, 255, 255, 0.04);
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+}
+
+.ranking-row:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================================
+   View Transitions
+   ============================================================ */
+.tab-root {
+    -fx-background-color: transparent;
+}
+
+.tab-content {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}

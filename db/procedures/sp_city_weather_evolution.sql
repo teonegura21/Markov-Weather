@@ -25,7 +25,7 @@ BEGIN
         f.date,
         f.temp_min,
         f.temp_max,
-        ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1),
+        ROUND(((f.temp_min + f.temp_max) / 2.0)::numeric, 1)::DOUBLE PRECISION,
         f.wind_speed,
         f.humidity,
         f.uv_index,

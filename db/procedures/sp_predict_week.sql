@@ -40,6 +40,15 @@ DECLARE
     v_has_historical BOOLEAN;
     v_total_days INTEGER;
 BEGIN
+    -- Validare parametri de intrare
+    IF p_city_id IS NULL OR p_city_id <= 0 THEN
+        RAISE EXCEPTION 'ID-ul orașului trebuie să fie un număr pozitiv, primit: %', p_city_id;
+    END IF;
+
+    IF p_days IS NULL OR p_days < 1 OR p_days > 30 THEN
+        RAISE EXCEPTION 'Numărul de zile trebuie să fie între 1 și 30, primit: %', p_days;
+    END IF;
+
     SELECT COUNT(*) > 0 INTO v_has_historical
     FROM forecasts
     WHERE city_id = p_city_id AND date < p_start_date;
@@ -91,10 +100,10 @@ BEGIN
 
         RETURN QUERY
         SELECT v_target,
-               ROUND(v_hist_tmin::numeric, 1),
-               ROUND(v_hist_tmax::numeric, 1),
-               ROUND(((v_hist_tmin + v_hist_tmax) / 2.0)::numeric, 1),
-               ROUND(v_hist_wind::numeric, 1),
+               ROUND(v_hist_tmin::numeric, 1)::DOUBLE PRECISION,
+               ROUND(v_hist_tmax::numeric, 1)::DOUBLE PRECISION,
+               ROUND(((v_hist_tmin + v_hist_tmax) / 2.0)::numeric, 1)::DOUBLE PRECISION,
+               ROUND(v_hist_wind::numeric, 1)::DOUBLE PRECISION,
                ROUND(v_hist_hum)::INTEGER,
                ROUND(v_hist_uv)::INTEGER,
                sp_generate_icon(v_hist_tmax, ROUND(v_hist_hum)::INTEGER, v_hist_wind, ROUND(v_hist_uv)::INTEGER)::VARCHAR,

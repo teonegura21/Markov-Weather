@@ -26,7 +26,7 @@ DB_URL=jdbc:postgresql://localhost:5433/prognoza_meteo mvn javafx:run
 ```
 ┌─────────────┐     JDBC      ┌─────────────────┐     SQL      ┌─────────────┐
 │  JavaFX UI  │ ◄────────────► │  Java Services  │ ◄──────────► │ PostgreSQL  │
-│  (8 tab-uri)│                │  (business logic│              │  + proceduri │
+│  (3 tab-uri)│                │  (business logic│              │  + proceduri │
 └─────────────┘                │   thin layer)   │              │  stocate     │
                                └─────────────────┘              └─────────────┘
                                         │
@@ -41,14 +41,9 @@ DB_URL=jdbc:postgresql://localhost:5433/prognoza_meteo mvn javafx:run
 
 | Tab | Funcționalitate |
 |-----|----------------|
-| 🌤️ Prognoză | Prognoza zilnică pe 10 zile cu date reale de la Open-Meteo |
-| 🗺️ Hartă | Hartă 2.5D a României cu bare de extrudare pentru temperaturi |
-| 📊 Comparații | Compară prognoze între ani, sezoane, luni sau aceeași zi |
-| 📈 Statistici | Detectare anomalii, evoluție temperaturi, avertizări meteo |
-| 🔮 Predicții | Monte Carlo probabilist: benzi P10-P90, probabilități evenimente |
-| 🏆 Clasamente | Ranking orașe după temperatură, umiditate, similaritate climatică |
-| 🎯 Acuratețe | Backtest predictii vs real, metrici MAE/RMSE, învățare din erori |
-| 💬 Comentarii | Voturi și comentarii utilizatori, reputație |
+| 🌤️ Acum | Dashboard unificat: prognoză zilnică, evoluție temperatură, predicții probabilistice P10-P90, comparații istorice, probabilități meteo, clasamente orașe |
+| 🗺️ Hartă | Hartă 2.5D a României cu bare de extrudare, animații meteo (ploaie, ninsoare, soare, furtună), timelapse -7…+7 zile |
+| ⋮ Mai multe | Setări (unități, sincronizare), despre aplicație |
 
 ## 🧠 Motor de predicție
 
@@ -66,7 +61,7 @@ DB_URL=jdbc:postgresql://localhost:5433/prognoza_meteo mvn javafx:run
 mvn test
 ```
 
-**34 teste**, 0 eșecuri:
+**38 teste**, 0 eșecuri:
 - `CityServiceTest` (3)
 - `UserServiceTest` (5)
 - `ForecastServiceTest` (3)
@@ -76,6 +71,8 @@ mvn test
 - `AccuracyServiceTest` (3)
 - `ReinforcementServiceTest` (2)
 - `DatabaseInitializerTest` (3)
+- `BackgroundSyncServiceTest` (2)
+- `AppStateTest` (2)
 
 ## 🛠️ Stack tehnic
 
@@ -89,8 +86,9 @@ mvn test
 
 ## 🗄️ Baza de date
 
-- **14 migrații** numerotate (`001_create_countries.sql` → `014_add_reinforcement_log.sql`)
+- **15 migrații** numerotate (`001_create_countries.sql` → `015_add_triggers.sql`)
 - **39 proceduri stocate** (prefix `sp_` și `fn_`)
+- **2 trigger-e** pentru automatizare (`trg_forecasts_updated_at`, `trg_update_reputation_on_vote`)
 - Auto-initializare la pornirea aplicației via `DatabaseInitializer`
 - Seed cu România + 25 de orașe
 
@@ -98,21 +96,21 @@ mvn test
 
 | Combinație | Acțiune |
 |------------|---------|
-| `Ctrl+1` … `Ctrl+8` | Comută între tab-uri |
+| `Ctrl+1` … `Ctrl+3` | Comută între tab-uri |
 
 ## 📁 Structură proiect
 
 ```
 SGBD/
 ├── src/main/java/com/sgbd/
-│   ├── controller/          # 8 controller-e JavaFX
+│   ├── controller/          # 3 controller-e active JavaFX (UnifiedDashboard, Map, More)
 │   ├── model/               # Entități (City, Forecast, User, Vote)
 │   ├── service/             # Servicii business + import date
 │   └── service/prediction/  # Motor ML: vectori, clustering, Markov, HMM, Monte Carlo, RL
-├── src/test/java/           # 34 teste unitare
+├── src/test/java/           # 38 teste unitare
 ├── src/main/resources/com/sgbd/css/
 │   └── style.css            # Temă dark glassmorphism
-├── db/migrations/           # 14 migrații SQL
+├── db/migrations/           # 15 migrații SQL
 ├── db/seeds/                # Seed-uri (țări, orașe)
 ├── db/procedures/           # 39 proceduri stocate
 ├── docker-compose.yml
