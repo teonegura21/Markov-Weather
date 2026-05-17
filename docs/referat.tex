@@ -116,7 +116,7 @@ Universitatea ``Alexandru Ioan Cuza" din Iasi
 \vfill
 \begin{center}
 \textit{Materie: Sisteme de Gestionare a Bazelor de Date (SGBD)}\\
-\textit{Coordonator: [Numele profesorului coordonator]}
+\textit{Coordonator: Lect. Dr. Simona Varlan}
 \end{center}
 \newpage
 
@@ -182,6 +182,10 @@ $\rightarrow$ JavaFX citeste rezultatele finale prin JDBC
 }}
 \caption{Flux end-to-end al datelor in aplicatie}
 \end{figure}
+
+\begin{infobox}[Diagrama arhitecturala interactiva]
+In repository-ul proiectului (\texttt{prognoza-meteo-architecture.html}) exista o diagrama arhitecturala interactiva in format HTML care prezinta vizual toate straturile aplicatiei, procedurile stocate si fluxurile de date. Aceasta poate fi deschisa in orice browser modern si ofera o perspectiva complementara diagramei statice din prezentul referat.
+\end{infobox}
 
 % ========== 2. CERINTE DE BUSINESS ==========
 \section{Cerinte de business identificate}
@@ -318,31 +322,31 @@ Pipeline-ul de machine learning introduce tabele suplimentare care, prin design,
 \end{itemize}
 
 \begin{table}[H]
-\centering
-\begin{tabular}{@{}lccccc@{}}
+\centering\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccc@{}}
 \toprule
-\textbf{Tabela} & \textbf{PK} & \textbf{FK} & \textbf{1NF} & \textbf{2NF} & \textbf{3NF/BCNF} \\
+\textbf{Tabela} & \textbf{PK/FK} & \textbf{1NF} & \textbf{2NF} & \textbf{BCNF} \\
 \midrule
-\texttt{countries} & id & --- & Da & Da & Da \\
-\texttt{cities} & id & $\rightarrow$ countries & Da & Da & Da \\
-\texttt{forecasts} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{hourly\_forecasts} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{users} & id & --- & Da & Da & Da \\
-\texttt{votes} & id & $\rightarrow$ users, forecasts & Da & Da & Da \\
-\texttt{comments} & id & $\rightarrow$ users, forecasts, comments & Da & Da & Da \\
-\texttt{weather\_vectors} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{weather\_regimes} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{daily\_regimes} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{markov\_transitions} & id & --- & Da & Da & Da \\
-\texttt{hidden\_states} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{hidden\_transitions} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{monte\_carlo\_predictions} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{seasonal\_climatology} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{prediction\_accuracy} & id & $\rightarrow$ cities & Da & Da & Da \\
-\texttt{forecast\_log} & id & $\rightarrow$ forecasts & Da & Da & Da \\
+\texttt{countries} & id & Da & Da & Da \\
+\texttt{cities} & id $\rightarrow$ countries & Da & Da & Da \\
+\texttt{forecasts} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{hourly\_forecasts} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{users} & id & Da & Da & Da \\
+\texttt{votes} & id $\rightarrow$ users, forecasts & Da & Da & Da \\
+\texttt{comments} & id $\rightarrow$ users, forecasts, self & Da & Da & Da \\
+\texttt{weather\_vectors} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{weather\_regimes} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{daily\_regimes} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{markov\_transitions} & id & Da & Da & Da \\
+\texttt{hidden\_states} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{hidden\_transitions} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{monte\_carlo\_pred} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{seasonal\_climatology} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{prediction\_accuracy} & id $\rightarrow$ cities & Da & Da & Da \\
+\texttt{forecast\_log} & id $\rightarrow$ forecasts & Da & Da & Da \\
 \bottomrule
 \end{tabular}
-\caption{Verificarea formelor normale pentru toate tabelele}
+\caption{Verificarea formelor normale (toate tabelele sunt in BCNF)}
 \end{table}
 
 \newpage
@@ -376,27 +380,27 @@ Diagrama E/A a fost realizata conform standardului UML pentru diagrame de clase,
 \subsection{Asocieri si multiplicitati}
 
 \begin{table}[H]
-\centering
-\begin{tabular}{@{}llll@{}}
+\centering\small\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llcc@{}}
 \toprule
-\textbf{Entitate sursa} & \textbf{Entitate tinta} & \textbf{Tip} & \textbf{Multiplicitate} \\
+\textbf{Sursa} & \textbf{Tinta} & \textbf{Tip} & \textbf{Mult.} \\
 \midrule
-\texttt{countries} & \texttt{cities} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{forecasts} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{hourly\_forecasts} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{weather\_vectors} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{daily\_regimes} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{hidden\_states} & compozitie & $1 : 0..*$ \\
-\texttt{cities} & \texttt{monte\_carlo\_predictions} & compozitie & $1 : 0..*$ \\
-\texttt{forecasts} & \texttt{votes} & agregare & $1 : 0..*$ \\
-\texttt{forecasts} & \texttt{comments} & agregare & $1 : 0..*$ \\
-\texttt{forecasts} & \texttt{forecast\_log} & agregare & $1 : 0..*$ \\
-\texttt{users} & \texttt{votes} & asociere & $1 : 0..*$ \\
-\texttt{users} & \texttt{comments} & asociere & $1 : 0..*$ \\
-\texttt{comments} & \texttt{comments} & auto-asociere & $1 : 0..*$ \\
+\texttt{countries} & \texttt{cities} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{forecasts} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{hourly\_fc} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{weather\_vec} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{daily\_reg} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{hidden\_st} & compozitie & 1 : 0..* \\
+\texttt{cities} & \texttt{mc\_pred} & compozitie & 1 : 0..* \\
+\texttt{forecasts} & \texttt{votes} & agregare & 1 : 0..* \\
+\texttt{forecasts} & \texttt{comments} & agregare & 1 : 0..* \\
+\texttt{forecasts} & \texttt{forecast\_log} & agregare & 1 : 0..* \\
+\texttt{users} & \texttt{votes} & asociere & 1 : 0..* \\
+\texttt{users} & \texttt{comments} & asociere & 1 : 0..* \\
+\texttt{comments} & \texttt{comments} & auto-ref & 1 : 0..* \\
 \bottomrule
 \end{tabular}
-\caption{Asocieri intre entitati}
+\caption{Asocieri intre entitati (abrevieri: fc=forecasts, vec=vectors, reg=regimes, st=states, mc=monte\_carlo)}
 \end{table}
 
 \subsection{Justificarea cheilor primare si straine}
@@ -970,7 +974,36 @@ Proiectul include un set comprehensiv de teste unitare si de integrare:
 
 Testul de integrare \texttt{MlPipelineIntegrationTest} valideaza intregul pipeline ML cu date reale de la Open-Meteo pentru Bucuresti: importa 365 de zile istorice, construieste vectori, ruleaza clustering, Markov, HMM si Monte Carlo, apoi verifica consistenta percentilelor ($\text{P10} \leq \text{P50} \leq \text{P90}$) si faptul ca toate probabilitatile sunt in $[0, 1]$.
 
-% ========== 9. CONCLUZII ==========
+% ========== 9. BIBLIOGRAFIE ==========
+\section{Bibliografie}
+
+\begin{thebibliography}{9}
+
+\bibitem{markov_weather} Rabiner, L. R. (1989). ``A tutorial on hidden Markov models and selected applications in speech recognition." \textit{Proceedings of the IEEE}, 77(2), 257--286. Aplicatia extinde HMM-urile pentru modelarea regimurilor meteorologice, folosind algoritmul Baum-Welch pentru estimarea parametrilor.
+
+\bibitem{markov_chains} Norris, J. R. (1998). \textit{Markov Chains}. Cambridge University Press. Lanturile Markov de ordin 2 implementate in \texttt{sp\_build\_markov\_tensor} permit capturarea persistentei fenomenelor meteorologice pe 3 zile consecutive, spre deosebire de modelele de ordin 1.
+
+\bibitem{monte_carlo} Robert, C. P., \& Casella, G. (2004). \textit{Monte Carlo Statistical Methods}. Springer. Simularea cu 5000 de traiectorii si extragerea percentilelor (P10, P50, P90) urmeaza metodologia clasica a estimarii distributiilor predictive prin resampling.
+
+\bibitem{fuzzy_logic} Ross, T. J. (2010). \textit{Fuzzy Logic with Engineering Applications}. Wiley. Detectoarele fuzzy (canicula, furtuna, ceata) din \texttt{sp\_compute\_recipe\_scores} folosesc functii de apartenenta sigmoidale si operatori T-norm (\texttt{LEAST}) conform teoriei sistemelor fuzzy.
+
+\bibitem{postgres_docs} The PostgreSQL Global Development Group. \textit{PostgreSQL 16 Documentation} --- \url{https://www.postgresql.org/docs/16/}. Procedurile stocate PL/pgSQL, functiile de fereastra (\texttt{LAG}, \texttt{LEAD}), tipurile array si JSONB sunt documentate oficial.
+
+\bibitem{open_meteo} Zippenfenig, P. (2023). ``Open-Meteo.com Weather API." \url{https://open-meteo.com/}. Sursa gratuita de date meteorologice istorice si de prognoza, utilizata pentru popularea automata a tabelei \texttt{forecasts}.
+
+\bibitem{db_design} Elmasri, R., \& Navathe, S. B. (2015). \textit{Fundamentals of Database Systems}. Pearson. Capitolele privind normalizarea (3NF, BCNF) si proiectarea diagramelor E/A au constituit baza teoretica a schemei bazei de date.
+
+\bibitem{jdbc} Oracle Corporation. \textit{The Java Tutorials --- JDBC Basics}. \url{https://docs.oracle.com/javase/tutorial/jdbc/}. Conectivitatea JDBC directa (fara ORM) a fost aleasa pentru a demonstra controlul explicit al transactiilor si al apelurilor de proceduri stocate.
+
+\bibitem{hikari} brettwooldridge. \textit{HikariCP}. \url{https://github.com/brettwooldridge/HikariCP}. Pool-ul de conexiuni HikariCP gestioneaza eficient conexiunile TCP catre PostgreSQL, reducand overhead-ul de initializare la fiecare query.
+
+\bibitem{kmeans} Arthur, D., \& Vassilvitskii, S. (2007). ``k-means++: The advantages of careful seeding." \textit{SODA '07}. Clustering-ul regimurilor meteorologice foloseste k-means++ prin Apache Commons Math pentru initializarea centroidelor.
+
+\end{thebibliography}
+
+\newpage
+
+% ========== 10. CONCLUZII ==========
 \section{Concluzii}
 
 Prezentul proiect demonstreaza ca un sistem de gestiune a bazelor de date relationale (PostgreSQL) poate gazdui nu doar operatii CRUD, ci si algoritmi sofisticati de machine learning si simulare statistica. Prin transferarea pipeline-ului de predictie la nivelul serverului, am obtinut:
