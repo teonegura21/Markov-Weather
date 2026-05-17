@@ -27,10 +27,10 @@ BEGIN
         f.temp_max,
         COUNT(v.id),
         COUNT(v.id) FILTER (WHERE v.is_accurate = FALSE),
-        CASE WHEN COUNT(v.id) > 0
+        (CASE WHEN COUNT(v.id) > 0
             THEN ROUND((COUNT(v.id) FILTER (WHERE v.is_accurate = FALSE) * 100.0 / COUNT(v.id))::numeric, 1)
             ELSE 0
-        END,
+        END)::double precision,
         f.warning_text
     FROM forecasts f
     JOIN cities ci ON f.city_id = ci.id
