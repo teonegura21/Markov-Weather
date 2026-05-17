@@ -185,10 +185,16 @@ public class ForecastService {
                 while (rs.next()) {
                     ComparisonResult cr = new ComparisonResult();
                     cr.setTipComparatie("lunar");
-                    cr.setTempMinActuala(rs.getDouble("temp_min_actuala"));
-                    cr.setTempMaxActuala(rs.getDouble("temp_max_actuala"));
-                    cr.setTempMinMedie(rs.getDouble("temp_min_medie_istorica"));
-                    cr.setTempMaxMedie(rs.getDouble("temp_max_medie_istorica"));
+                    double tempMinActuala = rs.getDouble("temp_min_actuala");
+                    double tempMaxActuala = rs.getDouble("temp_max_actuala");
+                    double tempMinMedie = rs.getDouble("temp_min_medie_istorica");
+                    double tempMaxMedie = rs.getDouble("temp_max_medie_istorica");
+                    cr.setTempMinActuala(tempMinActuala);
+                    cr.setTempMaxActuala(tempMaxActuala);
+                    cr.setTempMinMedie(tempMinMedie);
+                    cr.setTempMaxMedie(tempMaxMedie);
+                    cr.setDiferentaTempMin(Math.round((tempMinActuala - tempMinMedie) * 10.0) / 10.0);
+                    cr.setDiferentaTempMax(Math.round((tempMaxActuala - tempMaxMedie) * 10.0) / 10.0);
                     list.add(cr);
                 }
             }
@@ -207,12 +213,18 @@ public class ForecastService {
                 while (rs.next()) {
                     ComparisonResult cr = new ComparisonResult();
                     cr.setTipComparatie(rs.getString("tip"));
-                    cr.setMedieAnSelectatTempMin(rs.getDouble("medie_an_selectat_temp_min"));
-                    cr.setMedieAnSelectatTempMax(rs.getDouble("medie_an_selectat_temp_max"));
+                    double medieAnSelectatTempMin = rs.getDouble("medie_an_selectat_temp_min");
+                    double medieAnSelectatTempMax = rs.getDouble("medie_an_selectat_temp_max");
+                    double medieIstoricaTempMin = rs.getDouble("medie_istorica_temp_min");
+                    double medieIstoricaTempMax = rs.getDouble("medie_istorica_temp_max");
+                    cr.setMedieAnSelectatTempMin(medieAnSelectatTempMin);
+                    cr.setMedieAnSelectatTempMax(medieAnSelectatTempMax);
                     cr.setMedieAnSelectatTempAvg(rs.getDouble("medie_an_selectat_temp_avg"));
-                    cr.setMedieIstoricaTempMin(rs.getDouble("medie_istorica_temp_min"));
-                    cr.setMedieIstoricaTempMax(rs.getDouble("medie_istorica_temp_max"));
+                    cr.setMedieIstoricaTempMin(medieIstoricaTempMin);
+                    cr.setMedieIstoricaTempMax(medieIstoricaTempMax);
                     cr.setMedieIstoricaTempAvg(rs.getDouble("medie_istorica_temp_avg"));
+                    cr.setDiferentaTempMin(Math.round((medieAnSelectatTempMin - medieIstoricaTempMin) * 10.0) / 10.0);
+                    cr.setDiferentaTempMax(Math.round((medieAnSelectatTempMax - medieIstoricaTempMax) * 10.0) / 10.0);
                     list.add(cr);
                 }
             }

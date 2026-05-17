@@ -13,6 +13,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -21,7 +22,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -48,8 +51,8 @@ import java.util.Random;
  */
 public class MapController {
 
-    private static final double CANVAS_W = 1100;
-    private static final double CANVAS_H = 700;
+    private static final double CANVAS_W = 1200;
+    private static final double CANVAS_H = 800;
     private static final double MAP_PAD = 40;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -72,6 +75,7 @@ public class MapController {
     private Label lastUpdateLabel;
 
     private double sunRotationAngle = 0;
+    private double mapScale = 1.0;
 
     /* ============================================================
        Clase interne pentru particule și stări de animație
@@ -176,10 +180,22 @@ public class MapController {
 
         canvasLayers = new StackPane(staticCanvas, dynamicCanvas);
 
+        // Group pentru ca ScrollPane să vadă dimensiunile scalate
+        Group mapGroup = new Group(canvasLayers);
+
+        ScrollPane scrollPane = new ScrollPane(mapGroup);
+        scrollPane.setPannable(true);
+        scrollPane.setFitToWidth(false);
+        scrollPane.setFitToHeight(false);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle("-fx-background: #0f172a;");
+
         // Container principal cu legendă și status
         StackPane canvasContainer = new StackPane();
         canvasContainer.setPrefSize(CANVAS_W, CANVAS_H);
-        canvasContainer.getChildren().add(canvasLayers);
+        canvasContainer.setMinSize(CANVAS_W, CANVAS_H);
+        canvasContainer.getChildren().add(scrollPane);
 
         VBox legend = buildLegend();
         StackPane.setAlignment(legend, Pos.BOTTOM_RIGHT);
@@ -192,6 +208,21 @@ public class MapController {
         StackPane.setMargin(lastUpdateLabel, new Insets(0, 0, 16, 16));
         canvasContainer.getChildren().add(lastUpdateLabel);
 
+        // Butoane zoom în bara de sus
+        Button zoomInBtn = new Button("+");
+        Button zoomOutBtn = new Button("-");
+        String zoomBtnStyle = "-fx-background-color: rgba(30,41,59,0.9); -fx-text-fill: #e2e8f0; -fx-font-weight: bold; -fx-font-size: 14px; -fx-min-width: 32px; -fx-min-height: 28px; -fx-cursor: hand;";
+        zoomInBtn.setStyle(zoomBtnStyle);
+        zoomOutBtn.setStyle(zoomBtnStyle);
+
+        zoomInBtn.setOnAction(e -> adjustZoom(1.2));
+        zoomOutBtn.setOnAction(e -> adjustZoom(1.0 / 1.2));
+
+        HBox zoomBox = new HBox(6, zoomOutBtn, zoomInBtn);
+        zoomBox.setAlignment(Pos.CENTER_RIGHT);
+        HBox.setHgrow(zoomBox, Priority.ALWAYS);
+        topBar.getChildren().add(zoomBox);
+
         root.getChildren().addAll(topBar, canvasContainer);
 
         initParticles();
@@ -199,6 +230,14 @@ public class MapController {
         loadData();
 
         return root;
+    }
+
+    private void adjustZoom(double factor) {
+        mapScale *= factor;
+        if (mapScale < 0.5) mapScale = 0.5;
+        if (mapScale > 3.0) mapScale = 3.0;
+        canvasLayers.setScaleX(mapScale);
+        canvasLayers.setScaleY(mapScale);
     }
 
     private void initParticles() {

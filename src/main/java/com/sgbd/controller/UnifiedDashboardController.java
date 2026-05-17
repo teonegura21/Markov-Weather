@@ -115,6 +115,7 @@ public class UnifiedDashboardController extends BaseController {
         innerContent = new VBox(16);
         innerContent.setPadding(new Insets(20));
         innerContent.setAlignment(Pos.TOP_CENTER);
+        innerContent.setMaxWidth(Double.MAX_VALUE);
 
         ScrollPane scroll = new ScrollPane(innerContent);
         scroll.setFitToWidth(true);
@@ -164,6 +165,7 @@ public class UnifiedDashboardController extends BaseController {
 
         VBox headerBox = new VBox(2, cityCombo, dateLabel);
         headerBox.setAlignment(Pos.CENTER);
+        headerBox.setMaxWidth(Double.MAX_VALUE);
 
         VBox heroCard = new VBox(6);
         heroCard.getStyleClass().add("weather-hero-card");
@@ -172,25 +174,37 @@ public class UnifiedDashboardController extends BaseController {
 
         mainEmoji = new Label("🌤️");
         mainEmoji.setStyle("-fx-font-size: 72px;");
+        mainEmoji.setMaxWidth(Double.MAX_VALUE);
+        mainEmoji.setAlignment(Pos.CENTER);
 
         mainTemp = new Label("—°");
         mainTemp.getStyleClass().add("weather-hero-temp");
+        mainTemp.setMaxWidth(Double.MAX_VALUE);
+        mainTemp.setAlignment(Pos.CENTER);
 
         conditionLabel = new Label("Se încarcă...");
         conditionLabel.getStyleClass().add("weather-hero-condition");
+        conditionLabel.setMaxWidth(Double.MAX_VALUE);
+        conditionLabel.setAlignment(Pos.CENTER);
 
         minMaxLabel = new Label("—");
         minMaxLabel.getStyleClass().add("weather-hero-minmax");
+        minMaxLabel.setMaxWidth(Double.MAX_VALUE);
+        minMaxLabel.setAlignment(Pos.CENTER);
 
         alertLabel = new Label();
         alertLabel.getStyleClass().add("alert-banner");
         alertLabel.setVisible(false);
         alertLabel.setManaged(false);
+        alertLabel.setMaxWidth(Double.MAX_VALUE);
+        alertLabel.setAlignment(Pos.CENTER);
 
         scoreLabel = new Label();
         scoreLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");
         scoreLabel.setVisible(false);
         scoreLabel.setManaged(false);
+        scoreLabel.setMaxWidth(Double.MAX_VALUE);
+        scoreLabel.setAlignment(Pos.CENTER);
 
         heroCard.getChildren().addAll(mainEmoji, mainTemp, conditionLabel, minMaxLabel, alertLabel, scoreLabel);
 
@@ -204,6 +218,7 @@ public class UnifiedDashboardController extends BaseController {
         HBox strip = new HBox(6);
         strip.setAlignment(Pos.CENTER);
         strip.setPadding(new Insets(4, 0, 4, 0));
+        strip.setMaxWidth(Double.MAX_VALUE);
 
         LocalDate base = session.getSelectedDate();
         if (base == null) { base = LocalDate.now(); }
@@ -273,6 +288,7 @@ public class UnifiedDashboardController extends BaseController {
         hourlyScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         hourlyScroll.setStyle("-fx-background: transparent;");
         hourlyScroll.setFitToHeight(true);
+        hourlyScroll.setMaxWidth(Double.MAX_VALUE);
 
         innerContent.getChildren().addAll(hourlyTitle, hourlyScroll);
     }
@@ -296,6 +312,7 @@ public class UnifiedDashboardController extends BaseController {
         dailyScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         dailyScroll.setStyle("-fx-background: transparent;");
         dailyScroll.setFitToHeight(true);
+        dailyScroll.setMaxWidth(Double.MAX_VALUE);
 
         innerContent.getChildren().addAll(dailyTitle, dailyScroll);
     }
@@ -322,12 +339,13 @@ public class UnifiedDashboardController extends BaseController {
 
         HBox rangeBox = new HBox(8);
         rangeBox.setAlignment(Pos.CENTER);
+        rangeBox.setMaxWidth(Double.MAX_VALUE);
         Button btn7 = createRangeButton("7 zile", 7);
         Button btn30 = createRangeButton("30 zile", 30);
-        Button btn365 = createRangeButton("1 an", 365);
+        Button btn90 = createRangeButton("90 zile", 90);
         rangeLabel = new Label("");
         rangeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #94a3b8;");
-        rangeBox.getChildren().addAll(btn7, btn30, btn365, rangeLabel);
+        rangeBox.getChildren().addAll(btn7, btn30, btn90, rangeLabel);
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
@@ -349,6 +367,7 @@ public class UnifiedDashboardController extends BaseController {
         listScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         listScroll.setStyle("-fx-background: transparent;");
         listScroll.setPrefHeight(220);
+        listScroll.setMaxWidth(Double.MAX_VALUE);
 
         VBox chartCard = wrapInChartCard(title, rangeBox, evolutionChart, listScroll);
         innerContent.getChildren().add(chartCard);
@@ -362,14 +381,20 @@ public class UnifiedDashboardController extends BaseController {
 
         confidenceLabel = new Label("Se calculează...");
         confidenceLabel.getStyleClass().add("confidence-badge");
+        confidenceLabel.setMaxWidth(Double.MAX_VALUE);
+        confidenceLabel.setAlignment(Pos.CENTER);
 
         regimeLabel = new Label("");
         regimeLabel.getStyleClass().add("regime-label");
+        regimeLabel.setMaxWidth(Double.MAX_VALUE);
+        regimeLabel.setAlignment(Pos.CENTER);
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         xAxis.setTickLabelFill(javafx.scene.paint.Color.web("#94a3b8"));
         yAxis.setTickLabelFill(javafx.scene.paint.Color.web("#94a3b8"));
+        xAxis.setLabel("Ziua");
+        yAxis.setLabel("Temperatură (°C)");
 
         probChart = new LineChart<>(xAxis, yAxis);
         probChart.setPrefHeight(250);
@@ -390,6 +415,7 @@ public class UnifiedDashboardController extends BaseController {
 
         comparisonToggleBox = new HBox(8);
         comparisonToggleBox.setAlignment(Pos.CENTER);
+        comparisonToggleBox.setMaxWidth(Double.MAX_VALUE);
         Button btnSameDay = createComparisonToggleButton("Zi curentă", "same_day");
         Button btnMonthly = createComparisonToggleButton("Lunar", "monthly");
         Button btnAnnual = createComparisonToggleButton("Anual", "annual");
@@ -495,7 +521,8 @@ public class UnifiedDashboardController extends BaseController {
             // silent — will retry on next render
         }
 
-        LocalDate today = session.getSelectedDate();
+        LocalDate selectedDate = session.getSelectedDate();
+        final LocalDate today = selectedDate != null ? selectedDate : LocalDate.now();
 
         // Thread 1: Hero + Hourly + Daily + Details
         new Thread(() -> {
@@ -519,38 +546,50 @@ public class UnifiedDashboardController extends BaseController {
 
         // Thread 2: Evolution chart
         new Thread(() -> {
+            LocalDate end = today;
+            LocalDate start = end.minusDays(currentRangeDays);
             try {
-                LocalDate end = today;
-                LocalDate start = end.minusDays(currentRangeDays);
                 List<Forecast> evo = forecastService.getCityWeatherEvolution(city.getId(), start, end);
                 Platform.runLater(() -> renderEvolution(evo, start, end));
-            } catch (SQLException e) {
-                Platform.runLater(() -> showError("Eroare evoluție: " + e.getMessage()));
+            } catch (Exception e) {
+                Platform.runLater(() -> renderEvolution(new ArrayList<>(), start, end));
             }
         }).start();
 
-        // Thread 3: Probabilistic + Comparison
+        // Thread 3: Probabilistic predictions
         new Thread(() -> {
+            List<PredictionEngineService.MonteCarloResult> results = new ArrayList<>();
             try {
-                List<PredictionEngineService.MonteCarloResult> results = new ArrayList<>();
                 for (int d = 0; d < 10; d++) {
                     var r = engine.getProbabilisticForecast(city.getId(), today.plusDays(d));
                     if (r != null) { results.add(r); }
                 }
+            } catch (Exception e) {
+                Platform.runLater(() -> showError("Eroare predicții probabilistice: " + e.getMessage()));
+            } finally {
+                List<PredictionEngineService.MonteCarloResult> finalResults = results;
+                Platform.runLater(() -> {
+                    renderProbabilistic(finalResults);
+                    renderProbabilityCards(finalResults.isEmpty() ? null : finalResults.get(0));
+                });
+            }
+        }).start();
+
+        // Thread 3b: Comparison
+        new Thread(() -> {
+            try {
                 List<ComparisonResult> comp;
                 switch (currentComparisonType) {
                     case "monthly" -> comp = forecastService.compareMonthly(city.getId(), today.getYear(), today.getMonthValue());
                     case "annual" -> comp = forecastService.compareAnnual(city.getId(), today.getYear());
                     default -> comp = forecastService.compareSameDay(city.getId(), today);
                 }
-
-                Platform.runLater(() -> {
-                    renderProbabilistic(results);
-                    renderComparison(comp);
-                    renderProbabilityCards(results.isEmpty() ? null : results.get(0));
-                });
+                Platform.runLater(() -> renderComparison(comp));
             } catch (Exception e) {
-                Platform.runLater(() -> showError("Eroare predicții: " + e.getMessage()));
+                Platform.runLater(() -> {
+                    renderComparison(new ArrayList<>());
+                    showError("Eroare comparație: " + e.getMessage());
+                });
             }
         }).start();
 
@@ -575,7 +614,7 @@ public class UnifiedDashboardController extends BaseController {
         // Thread 5: Orașe similare + Anomalii + Prognoze contestate
         new Thread(() -> {
             try {
-                int year = session.getSelectedDate().getYear();
+                int year = today.getYear();
                 var similar = statsService.classifySimilarCities(city.getId(), 30);
                 var anomalies = statsService.detectAnomalies(city.getId(), year);
                 var errors = statsService.identifyErrorForecasts(city.getId(), 50);
@@ -690,8 +729,8 @@ public class UnifiedDashboardController extends BaseController {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d MMM", new Locale("ro"));
         rangeLabel.setText(start.format(fmt) + " - " + end.format(fmt));
 
-        if (forecasts.isEmpty()) {
-            historyList.getChildren().add(new Label("Nu există date istorice"));
+        if (forecasts == null || forecasts.isEmpty()) {
+            historyList.getChildren().add(new Label("Nu există date"));
             return;
         }
 
@@ -711,7 +750,8 @@ public class UnifiedDashboardController extends BaseController {
             HBox row = new HBox(16);
             row.getStyleClass().add("daily-row");
             row.setPadding(new Insets(8, 16, 8, 16));
-            row.setAlignment(Pos.CENTER_LEFT);
+            row.setAlignment(Pos.CENTER);
+            row.setMaxWidth(Double.MAX_VALUE);
 
             Label dateLbl = new Label(f.getDate().format(DateTimeFormatter.ofPattern("EEE, d MMM", new Locale("ro"))));
             dateLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #f8fafc; -fx-min-width: 100px;");
@@ -806,7 +846,8 @@ public class UnifiedDashboardController extends BaseController {
 
         for (ComparisonResult cr : results) {
             HBox row = new HBox(12);
-            row.setAlignment(Pos.CENTER_LEFT);
+            row.setAlignment(Pos.CENTER);
+            row.setMaxWidth(Double.MAX_VALUE);
             row.setPadding(new Insets(8, 12, 8, 12));
             row.getStyleClass().add("glass-card");
 
@@ -868,12 +909,14 @@ public class UnifiedDashboardController extends BaseController {
         VBox card = new VBox(6);
         card.setPadding(new Insets(10));
         card.getStyleClass().add("glass-card");
-        card.setAlignment(Pos.TOP_LEFT);
+        card.setAlignment(Pos.TOP_CENTER);
         card.setMinWidth(160);
         card.setMaxWidth(180);
 
         Label titleLbl = new Label(emoji + " " + title);
         titleLbl.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
+        titleLbl.setMaxWidth(Double.MAX_VALUE);
+        titleLbl.setAlignment(Pos.CENTER);
         card.getChildren().add(titleLbl);
 
         for (int i = 0; i < Math.min(3, rankings.size()); i++) {
@@ -882,12 +925,16 @@ public class UnifiedDashboardController extends BaseController {
             String text = String.format("%d. %s %.1f%s", i + 1, r.getOras(), r.getValoare(), unit);
             Label lbl = new Label(text);
             lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #f8fafc;");
+            lbl.setMaxWidth(Double.MAX_VALUE);
+            lbl.setAlignment(Pos.CENTER);
             card.getChildren().add(lbl);
         }
 
         if (rankings.isEmpty()) {
             Label empty = new Label("Fără date");
             empty.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748b;");
+            empty.setMaxWidth(Double.MAX_VALUE);
+            empty.setAlignment(Pos.CENTER);
             card.getChildren().add(empty);
         }
 
@@ -909,7 +956,8 @@ public class UnifiedDashboardController extends BaseController {
         for (int i = 0; i < Math.min(5, similar.size()); i++) {
             var r = similar.get(i);
             HBox row = new HBox(12);
-            row.setAlignment(Pos.CENTER_LEFT);
+            row.setAlignment(Pos.CENTER);
+            row.setMaxWidth(Double.MAX_VALUE);
             row.setPadding(new Insets(8, 12, 8, 12));
             row.getStyleClass().add("glass-card");
 
@@ -985,15 +1033,22 @@ public class UnifiedDashboardController extends BaseController {
     private Node createDetailCell(String icon, String value, String label) {
         VBox cell = new VBox(4);
         cell.getStyleClass().add("weather-detail-cell");
+        cell.setAlignment(Pos.CENTER);
 
         Label ic = new Label(icon);
         ic.getStyleClass().add("weather-detail-icon");
+        ic.setMaxWidth(Double.MAX_VALUE);
+        ic.setAlignment(Pos.CENTER);
 
         Label val = new Label(value);
         val.getStyleClass().add("weather-detail-value");
+        val.setMaxWidth(Double.MAX_VALUE);
+        val.setAlignment(Pos.CENTER);
 
         Label lbl = new Label(label);
         lbl.getStyleClass().add("weather-detail-label");
+        lbl.setMaxWidth(Double.MAX_VALUE);
+        lbl.setAlignment(Pos.CENTER);
 
         cell.getChildren().addAll(ic, val, lbl);
         return cell;
@@ -1003,10 +1058,10 @@ public class UnifiedDashboardController extends BaseController {
         VBox card = new VBox(6);
         card.setPadding(new Insets(12));
         card.getStyleClass().add("glass-card");
-        card.setAlignment(Pos.CENTER_LEFT);
+        card.setAlignment(Pos.CENTER);
 
         HBox top = new HBox(10);
-        top.setAlignment(Pos.CENTER_LEFT);
+        top.setAlignment(Pos.CENTER);
 
         Label ic = new Label(emoji);
         ic.setStyle("-fx-font-size: 22px;");
@@ -1017,7 +1072,7 @@ public class UnifiedDashboardController extends BaseController {
         Label val = new Label(String.format("%.0f%%", prob * 100));
         val.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #f8fafc;");
         HBox.setHgrow(val, Priority.ALWAYS);
-        val.setAlignment(Pos.CENTER_RIGHT);
+        val.setAlignment(Pos.CENTER);
 
         top.getChildren().addAll(ic, lbl, val);
 
@@ -1112,17 +1167,18 @@ public class UnifiedDashboardController extends BaseController {
             if (city != null) {
                 showLoading(true);
                 new Thread(() -> {
+                    LocalDate selDate = session.getSelectedDate();
+                    final LocalDate end = selDate != null ? selDate : LocalDate.now();
+                    final LocalDate start = end.minusDays(currentRangeDays);
                     try {
-                        LocalDate end = session.getSelectedDate();
-                        LocalDate start = end.minusDays(currentRangeDays);
                         List<Forecast> evo = forecastService.getCityWeatherEvolution(city.getId(), start, end);
                         Platform.runLater(() -> {
                             renderEvolution(evo, start, end);
                             showLoading(false);
                         });
-                    } catch (SQLException ex) {
+                    } catch (Exception ex) {
                         Platform.runLater(() -> {
-                            showError("Eroare evoluție: " + ex.getMessage());
+                            renderEvolution(new ArrayList<>(), start, end);
                             showLoading(false);
                         });
                     }
@@ -1229,11 +1285,11 @@ public class UnifiedDashboardController extends BaseController {
             VBox card = new VBox(8);
             card.getStyleClass().add("glass-card");
             card.setPadding(new Insets(12));
-            card.setAlignment(Pos.CENTER_LEFT);
+            card.setAlignment(Pos.CENTER);
             card.setMaxWidth(500);
 
             HBox header = new HBox(12);
-            header.setAlignment(Pos.CENTER_LEFT);
+            header.setAlignment(Pos.CENTER);
 
             Label dateLbl = new Label(a.getData().format(fmt));
             dateLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #f8fafc;");
@@ -1245,7 +1301,7 @@ public class UnifiedDashboardController extends BaseController {
             header.getChildren().addAll(dateLbl, cityLbl);
 
             HBox badges = new HBox(6);
-            badges.setAlignment(Pos.CENTER_LEFT);
+            badges.setAlignment(Pos.CENTER);
 
             if (a.isAnomalieTemperatura()) {
                 badges.getChildren().add(createBadge("🔥 Temp", "#ef4444"));
@@ -1289,7 +1345,7 @@ public class UnifiedDashboardController extends BaseController {
             HBox card = new HBox(12);
             card.getStyleClass().add("glass-card");
             card.setPadding(new Insets(12));
-            card.setAlignment(Pos.CENTER_LEFT);
+            card.setAlignment(Pos.CENTER);
             card.setMaxWidth(500);
 
             Label dateLbl = new Label(f.getDate().format(fmt));

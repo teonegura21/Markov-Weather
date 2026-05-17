@@ -124,6 +124,8 @@ class ForecastServiceTest {
 
             assertEquals(1, results.size());
             assertEquals(15.0, results.get(0).getTempMinActuala(), 0.01);
+            assertEquals(1.0, results.get(0).getDiferentaTempMin(), 0.01);
+            assertEquals(2.0, results.get(0).getDiferentaTempMax(), 0.01);
         }
     }
 
@@ -149,6 +151,8 @@ class ForecastServiceTest {
 
             assertEquals(1, results.size());
             assertEquals("anual", results.get(0).getTipComparatie());
+            assertEquals(0.5, results.get(0).getDiferentaTempMin(), 0.01);
+            assertEquals(0.5, results.get(0).getDiferentaTempMax(), 0.01);
         }
     }
 
