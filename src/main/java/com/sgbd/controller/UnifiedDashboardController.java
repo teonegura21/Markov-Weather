@@ -256,6 +256,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildHourlySection() {
         Label hourlyTitle = new Label("Prognoză orară");
         hourlyTitle.getStyleClass().add("section-title");
+        hourlyTitle.setAlignment(Pos.CENTER);
+        hourlyTitle.setMaxWidth(Double.MAX_VALUE);
 
         hourlyBox = new HBox(8);
         hourlyBox.getStyleClass().add("hourly-row");
@@ -278,6 +280,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildDailySection() {
         Label dailyTitle = new Label("Prognoza pe zile");
         dailyTitle.getStyleClass().add("section-title");
+        dailyTitle.setAlignment(Pos.CENTER);
+        dailyTitle.setMaxWidth(Double.MAX_VALUE);
 
         dailyBox = new HBox(10);
         dailyBox.setAlignment(Pos.CENTER);
@@ -299,6 +303,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildDetailGrid() {
         Label detailsTitle = new Label("Detalii");
         detailsTitle.getStyleClass().add("section-title");
+        detailsTitle.setAlignment(Pos.CENTER);
+        detailsTitle.setMaxWidth(Double.MAX_VALUE);
 
         detailGrid = new GridPane();
         detailGrid.getStyleClass().add("weather-detail-grid");
@@ -311,6 +317,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildEvolutionSection() {
         Label title = new Label("Evoluție temperatură");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         HBox rangeBox = new HBox(8);
         rangeBox.setAlignment(Pos.CENTER);
@@ -349,6 +357,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildProbabilisticSection() {
         Label title = new Label("Predicții probabilistice (10 zile)");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         confidenceLabel = new Label("Se calculează...");
         confidenceLabel.getStyleClass().add("confidence-badge");
@@ -375,6 +385,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildComparisonSection() {
         Label title = new Label("Comparație istorică");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         comparisonToggleBox = new HBox(8);
         comparisonToggleBox.setAlignment(Pos.CENTER);
@@ -384,7 +396,7 @@ public class UnifiedDashboardController extends BaseController {
         comparisonToggleBox.getChildren().addAll(btnSameDay, btnMonthly, btnAnnual);
 
         comparisonBox = new VBox(10);
-        comparisonBox.setAlignment(Pos.CENTER);
+        comparisonBox.setAlignment(Pos.TOP_CENTER);
         comparisonBox.setMaxWidth(500);
 
         VBox chartCard = wrapInChartCard(title, comparisonToggleBox, comparisonBox);
@@ -394,9 +406,11 @@ public class UnifiedDashboardController extends BaseController {
     private void buildProbabilityCardsSection() {
         Label title = new Label("Probabilități meteo");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         probCardsBox = new VBox(10);
-        probCardsBox.setAlignment(Pos.CENTER);
+        probCardsBox.setAlignment(Pos.TOP_CENTER);
         probCardsBox.setMaxWidth(500);
 
         innerContent.getChildren().addAll(title, probCardsBox);
@@ -405,6 +419,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildRankingsSection() {
         Label title = new Label("Clasamente orașe");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         rankingsBox = new VBox(10);
         rankingsBox.setAlignment(Pos.TOP_CENTER);
@@ -416,6 +432,8 @@ public class UnifiedDashboardController extends BaseController {
     private void buildSimilarCitiesSection() {
         Label title = new Label("Orașe similare");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         similarCitiesBox = new VBox(10);
         similarCitiesBox.setAlignment(Pos.TOP_CENTER);
@@ -427,9 +445,11 @@ public class UnifiedDashboardController extends BaseController {
     private void buildAnomaliesSection() {
         Label title = new Label("Anomalii detectate");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         anomaliesBox = new VBox(10);
-        anomaliesBox.setAlignment(Pos.CENTER);
+        anomaliesBox.setAlignment(Pos.TOP_CENTER);
         anomaliesBox.setMaxWidth(500);
 
         innerContent.getChildren().addAll(title, anomaliesBox);
@@ -438,9 +458,11 @@ public class UnifiedDashboardController extends BaseController {
     private void buildErrorForecastsSection() {
         Label title = new Label("Prognoze contestate");
         title.getStyleClass().add("section-title");
+        title.setAlignment(Pos.CENTER);
+        title.setMaxWidth(Double.MAX_VALUE);
 
         errorForecastsBox = new VBox(10);
-        errorForecastsBox.setAlignment(Pos.CENTER);
+        errorForecastsBox.setAlignment(Pos.TOP_CENTER);
         errorForecastsBox.setMaxWidth(500);
 
         innerContent.getChildren().addAll(title, errorForecastsBox);
@@ -451,6 +473,14 @@ public class UnifiedDashboardController extends BaseController {
     @Override
     protected void onCityChanged(City city) {
         loadAllData(city);
+    }
+
+    @Override
+    protected void onDateChanged(LocalDate date) {
+        City city = session.getSelectedCity();
+        if (city != null) {
+            loadAllData(city);
+        }
     }
 
     private void loadAllData(City city) {
@@ -767,7 +797,10 @@ public class UnifiedDashboardController extends BaseController {
     private void renderComparison(List<ComparisonResult> results) {
         comparisonBox.getChildren().clear();
         if (results == null || results.isEmpty()) {
-            comparisonBox.getChildren().add(new Label("Nu există date de comparație"));
+            Label emptyLabel = new Label("Nu există date de comparație");
+            emptyLabel.setAlignment(Pos.CENTER);
+            emptyLabel.setMaxWidth(Double.MAX_VALUE);
+            comparisonBox.getChildren().add(emptyLabel);
             return;
         }
 
@@ -796,7 +829,10 @@ public class UnifiedDashboardController extends BaseController {
     private void renderProbabilityCards(PredictionEngineService.MonteCarloResult result) {
         probCardsBox.getChildren().clear();
         if (result == null) {
-            probCardsBox.getChildren().add(new Label("Nu există date de probabilitate"));
+            Label emptyLabel = new Label("Nu există date de probabilitate");
+            emptyLabel.setAlignment(Pos.CENTER);
+            emptyLabel.setMaxWidth(Double.MAX_VALUE);
+            probCardsBox.getChildren().add(emptyLabel);
             return;
         }
         probCardsBox.getChildren().addAll(
@@ -864,6 +900,8 @@ public class UnifiedDashboardController extends BaseController {
         if (similar == null || similar.isEmpty()) {
             Label msg = new Label("Nu există date suficiente pentru clasificare.");
             msg.setStyle("-fx-font-size: 13px; -fx-text-fill: #94a3b8;");
+            msg.setAlignment(Pos.CENTER);
+            msg.setMaxWidth(Double.MAX_VALUE);
             similarCitiesBox.getChildren().add(msg);
             return;
         }
@@ -1179,8 +1217,10 @@ public class UnifiedDashboardController extends BaseController {
     private void renderAnomalies(List<Anomaly> anomalies) {
         anomaliesBox.getChildren().clear();
         if (anomalies.isEmpty()) {
-            anomaliesBox.getChildren().add(
-                new Label("Nu au fost detectate anomalii pentru perioada selectată."));
+            Label emptyLabel = new Label("Nu au fost detectate anomalii pentru perioada selectată.");
+            emptyLabel.setAlignment(Pos.CENTER);
+            emptyLabel.setMaxWidth(Double.MAX_VALUE);
+            anomaliesBox.getChildren().add(emptyLabel);
             return;
         }
 
@@ -1238,6 +1278,8 @@ public class UnifiedDashboardController extends BaseController {
         if (forecasts.isEmpty()) {
             Label empty = new Label("Nu există prognoze contestate pentru acest oraș.");
             empty.setStyle("-fx-font-size: 13px; -fx-text-fill: #94a3b8;");
+            empty.setAlignment(Pos.CENTER);
+            empty.setMaxWidth(Double.MAX_VALUE);
             errorForecastsBox.getChildren().add(empty);
             return;
         }

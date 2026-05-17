@@ -21,10 +21,10 @@ public final class EuropeMapData {
 
     private EuropeMapData() { }
 
-    public static final double MIN_LAT = 36.0;
-    public static final double MAX_LAT = 71.0;
-    public static final double MIN_LON = -10.0;
-    public static final double MAX_LON = 40.0;
+    public static final double MIN_LAT = 34.0;
+    public static final double MAX_LAT = 72.0;
+    public static final double MIN_LON = -25.0;
+    public static final double MAX_LON = 45.0;
 
     private static Map<String, double[][]> loadPolygons() {
         Map<String, double[][]> map = new LinkedHashMap<>();

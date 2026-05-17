@@ -3,7 +3,7 @@ package com.sgbd.controller;
 import com.sgbd.service.MapService;
 import com.sgbd.service.MapService.MapData;
 import com.sgbd.util.ColorUtil;
-import com.sgbd.util.RomaniaMapData;
+import com.sgbd.util.EuropeMapData;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.FadeTransition;
@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * Controler pentru harta interactivă a României cu efecte 2.5D și animații meteo.
+ * Controler pentru harta interactivă a Europei cu efecte 2.5D și animații meteo.
  * Arhitectura pe două straturi (static + dinamic) asigură performanță optimă.
  */
 public class MapController {
@@ -221,7 +221,7 @@ public class MapController {
             currentMapData = mapService.getMapData(null, date);
             cityAnimStates.clear();
             for (MapData md : currentMapData) {
-                Point2D p = RomaniaMapData.geoToCanvas(
+                Point2D p = EuropeMapData.geoToCanvas(
                     md.getLatitudine(), md.getLongitudine(), CANVAS_W, CANVAS_H, MAP_PAD);
                 cityAnimStates.put(md.getOras(), new CityAnimState(p.getX(), p.getY(), md.getPictograma(), rand));
             }
@@ -237,12 +237,12 @@ public class MapController {
         staticGc.setFill(Color.web("#0f172a"));
         staticGc.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-        drawRomaniaPolygon(staticGc);
+        drawEuropePolygons(staticGc);
         drawTerrainHints(staticGc);
 
         // Desenează marcatorii statici ai orașelor
         for (MapData md : currentMapData) {
-            Point2D p = RomaniaMapData.geoToCanvas(
+            Point2D p = EuropeMapData.geoToCanvas(
                 md.getLatitudine(), md.getLongitudine(), CANVAS_W, CANVAS_H, MAP_PAD);
             drawCityStatic(staticGc, md, p.getX(), p.getY());
         }
@@ -260,71 +260,68 @@ public class MapController {
     }
 
     /* ============================================================
-       Desenare poligon România și indicații teren
+       Desenare poligoane Europa și indicații teren
        ============================================================ */
 
-    private void drawRomaniaPolygon(GraphicsContext gc) {
-        double[][] poly = RomaniaMapData.getBorderPolygon();
-        if (poly.length == 0) return;
-
-        gc.beginPath();
-        Point2D first = RomaniaMapData.geoToCanvas(poly[0][0], poly[0][1], CANVAS_W, CANVAS_H, MAP_PAD);
-        gc.moveTo(first.getX(), first.getY());
-        for (int i = 1; i < poly.length; i++) {
-            Point2D pt = RomaniaMapData.geoToCanvas(poly[i][0], poly[i][1], CANVAS_W, CANVAS_H, MAP_PAD);
-            gc.lineTo(pt.getX(), pt.getY());
+    private void drawEuropePolygons(GraphicsContext gc) {
+        // Agregăm temperatura medie per țară pentru pseudo-relief
+        Map<String, Double> tempSum = new HashMap<>();
+        Map<String, Integer> tempCount = new HashMap<>();
+        for (MapData md : currentMapData) {
+            String tara = md.getTara();
+            if (tara == null) continue;
+            tempSum.merge(tara, md.getTempMax(), Double::sum);
+            tempCount.merge(tara, 1, Integer::sum);
         }
-        gc.closePath();
+        Map<String, Double> countryTemp = new HashMap<>();
+        for (String tara : tempSum.keySet()) {
+            countryTemp.put(tara, tempSum.get(tara) / tempCount.get(tara));
+        }
 
-        // Gradient vertical: sud (verde închis) → nord (albastru închis)
-        LinearGradient grad = new LinearGradient(0, 1, 0, 0, true, null,
-            new Stop(0, Color.web("#065f46")),
-            new Stop(1, Color.web("#1e3a5f")));
-        gc.setFill(grad);
-        gc.fill();
+        for (java.util.Map.Entry<String, double[][]> entry : EuropeMapData.getCountryPolygons().entrySet()) {
+            String country = entry.getKey();
+            double[][] poly = entry.getValue();
+            if (poly == null || poly.length == 0) continue;
 
-        // Efect de strălucire (glow) pentru contur — simulat prin linii multiple
-        gc.setStroke(Color.web("#94a3b8", 0.25));
-        gc.setLineWidth(6);
-        gc.stroke();
-        gc.setStroke(Color.web("#94a3b8", 0.55));
-        gc.setLineWidth(3);
-        gc.stroke();
-        gc.setStroke(Color.web("#94a3b8"));
-        gc.setLineWidth(2);
-        gc.stroke();
+            gc.beginPath();
+            Point2D first = EuropeMapData.geoToCanvas(poly[0][1], poly[0][0], CANVAS_W, CANVAS_H, MAP_PAD);
+            gc.moveTo(first.getX(), first.getY());
+            for (int i = 1; i < poly.length; i++) {
+                Point2D pt = EuropeMapData.geoToCanvas(poly[i][1], poly[i][0], CANVAS_W, CANVAS_H, MAP_PAD);
+                gc.lineTo(pt.getX(), pt.getY());
+            }
+            gc.closePath();
+
+            Double avgTemp = countryTemp.get(country);
+            if (avgTemp != null) {
+                Color baseColor = ColorUtil.temperatureToColor(avgTemp);
+                gc.setFill(baseColor.deriveColor(0, 1, 0.85, 0.72));
+            } else {
+                gc.setFill(Color.web("#1e293b", 0.55));
+            }
+            gc.fill();
+
+            gc.setStroke(Color.web("#94a3b8", 0.30));
+            gc.setLineWidth(1);
+            gc.stroke();
+        }
     }
 
     private void drawTerrainHints(GraphicsContext gc) {
-        // Arcul Carpatic — oval semi-transparent în centru-nord
-        Point2D carpathians = RomaniaMapData.geoToCanvas(46.5, 25.5, CANVAS_W, CANVAS_H, MAP_PAD);
-        gc.setFill(Color.web("#5D4037", 0.22));
-        gc.fillOval(carpathians.getX() - 70, carpathians.getY() - 40, 140, 80);
+        // Alpi — oval semi-transparent în centrul Europei
+        Point2D alps = EuropeMapData.geoToCanvas(46.5, 10.0, CANVAS_W, CANVAS_H, MAP_PAD);
+        gc.setFill(Color.web("#5D4037", 0.18));
+        gc.fillOval(alps.getX() - 60, alps.getY() - 35, 120, 70);
 
-        // Dunărea — linie ondulată în partea de sud a hărții
-        double danubeY = RomaniaMapData.geoToCanvas(44.0, 20.2, CANVAS_W, CANVAS_H, MAP_PAD).getY();
-        double startX = RomaniaMapData.geoToCanvas(44.0, 22.5, CANVAS_W, CANVAS_H, MAP_PAD).getX();
-        double endX = RomaniaMapData.geoToCanvas(44.0, 28.5, CANVAS_W, CANVAS_H, MAP_PAD).getX();
+        // Pirinei — oval în sud-vest
+        Point2D pyrenees = EuropeMapData.geoToCanvas(42.5, 1.0, CANVAS_W, CANVAS_H, MAP_PAD);
+        gc.setFill(Color.web("#5D4037", 0.15));
+        gc.fillOval(pyrenees.getX() - 40, pyrenees.getY() - 25, 80, 50);
 
-        gc.beginPath();
-        gc.moveTo(startX, danubeY);
-        for (double x = startX; x <= endX; x += 8) {
-            double y = danubeY + Math.sin((x - startX) * 0.08) * 6;
-            gc.lineTo(x, y);
-        }
-        gc.setStroke(Color.web("#1e40af", 0.85));
-        gc.setLineWidth(3);
-        gc.stroke();
-
-        // Delta Dunării — linii ramificate în est
-        Point2D delta = RomaniaMapData.geoToCanvas(45.2, 29.1, CANVAS_W, CANVAS_H, MAP_PAD);
-        gc.setStroke(Color.web("#60a5fa", 0.7));
-        gc.setLineWidth(2);
-        gc.strokeLine(delta.getX(), delta.getY(), delta.getX() + 25, delta.getY() - 10);
-        gc.strokeLine(delta.getX(), delta.getY(), delta.getX() + 20, delta.getY() + 8);
-        gc.strokeLine(delta.getX(), delta.getY(), delta.getX() + 15, delta.getY() + 18);
-        gc.strokeLine(delta.getX() + 25, delta.getY() - 10, delta.getX() + 35, delta.getY() - 5);
-        gc.strokeLine(delta.getX() + 20, delta.getY() + 8, delta.getX() + 30, delta.getY() + 12);
+        // Munții Scandiinavi — oval în nord
+        Point2D scandinavia = EuropeMapData.geoToCanvas(62.0, 8.0, CANVAS_W, CANVAS_H, MAP_PAD);
+        gc.setFill(Color.web("#5D4037", 0.15));
+        gc.fillOval(scandinavia.getX() - 50, scandinavia.getY() - 30, 100, 60);
     }
 
     /* ============================================================
@@ -357,10 +354,10 @@ public class MapController {
         gc.strokeOval(x - 8, y - 8, 16, 16);
 
         // Badge temperatură — dreptunghi rotunjit deasupra extruziunii
-        String tempText = Math.round(md.getTempMax()) + "°";
-        gc.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        String tempText = Math.round(md.getTempMin()) + "° / " + Math.round(md.getTempMax()) + "°";
+        gc.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
         double textW = gc.getFont().getSize() * tempText.length() * 0.65;
-        double badgeW = Math.max(28, textW + 8);
+        double badgeW = Math.max(36, textW + 10);
         double badgeH = 16;
         double badgeY = y - 8 - barHeight - badgeH - 3;
 
@@ -432,7 +429,7 @@ public class MapController {
 
         // Animații per oraș
         for (MapData md : currentMapData) {
-            Point2D p = RomaniaMapData.geoToCanvas(
+            Point2D p = EuropeMapData.geoToCanvas(
                 md.getLatitudine(), md.getLongitudine(), CANVAS_W, CANVAS_H, MAP_PAD);
             String key = md.getOras();
             CityAnimState state = cityAnimStates.get(key);
