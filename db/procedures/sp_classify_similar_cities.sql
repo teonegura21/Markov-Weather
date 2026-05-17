@@ -44,10 +44,10 @@ BEGIN
             POWER(o.hum - r.hum, 2) +
             POWER(o.wind - r.wind, 2)
         )::numeric, 2)::DOUBLE PRECISION,
-        ROUND(o.tmin::numeric, 1),
-        ROUND(o.tmax::numeric, 1),
-        ROUND(o.hum::numeric, 1),
-        ROUND(o.wind::numeric, 1)
+        ROUND(o.tmin::numeric, 1)::DOUBLE PRECISION,
+        ROUND(o.tmax::numeric, 1)::DOUBLE PRECISION,
+        ROUND(o.hum::numeric, 1)::DOUBLE PRECISION,
+        ROUND(o.wind::numeric, 1)::DOUBLE PRECISION
     FROM others o, ref r
     ORDER BY SQRT(
         POWER(o.tmin - r.tmin, 2) +
