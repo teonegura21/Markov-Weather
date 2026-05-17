@@ -31,11 +31,11 @@ public class StatisticsService {
                     a.setAnomalieVant(rs.getBoolean("anomalie_vant"));
                     a.setAnomalieUmiditate(rs.getBoolean("anomalie_umiditate"));
                     a.setAnomalieUV(rs.getBoolean("anomalie_uv"));
-                    a.setTempMin(rs.getDouble("temp_min"));
-                    a.setTempMax(rs.getDouble("temp_max"));
-                    a.setVitezaVant(rs.getDouble("viteza_vant"));
-                    a.setUmiditate(rs.getInt("umiditate"));
-                    a.setIndiceUV(rs.getInt("indice_uv"));
+                    a.setTempMin(rs.getDouble("out_temp_min"));
+                    a.setTempMax(rs.getDouble("out_temp_max"));
+                    a.setVitezaVant(rs.getDouble("out_viteza_vant"));
+                    a.setUmiditate(rs.getInt("out_umiditate"));
+                    a.setIndiceUV(rs.getInt("out_indice_uv"));
                     a.setDetaliiAnomalie(rs.getString("detalii_anomalie"));
                     list.add(a);
                 }

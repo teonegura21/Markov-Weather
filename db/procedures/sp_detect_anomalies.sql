@@ -14,11 +14,11 @@ CREATE OR REPLACE FUNCTION sp_detect_anomalies(
     anomalie_vant BOOLEAN,
     anomalie_umiditate BOOLEAN,
     anomalie_uv BOOLEAN,
-    temp_min DOUBLE PRECISION,
-    temp_max DOUBLE PRECISION,
-    viteza_vant DOUBLE PRECISION,
-    umiditate INTEGER,
-    indice_uv INTEGER,
+    out_temp_min DOUBLE PRECISION,
+    out_temp_max DOUBLE PRECISION,
+    out_viteza_vant DOUBLE PRECISION,
+    out_umiditate INTEGER,
+    out_indice_uv INTEGER,
     detalii_anomalie TEXT
 )
 LANGUAGE plpgsql
@@ -52,15 +52,15 @@ BEGIN
     JOIN cities ci ON f.city_id = ci.id
     JOIN countries co ON ci.country_id = co.id
     JOIN LATERAL (
-        SELECT AVG(temp_min), STDDEV(temp_min),
-               AVG(temp_max), STDDEV(temp_max),
-               AVG(wind_speed), STDDEV(wind_speed),
-               AVG(humidity), STDDEV(humidity),
-               AVG(uv_index), STDDEV(uv_index)
-        FROM forecasts
-        WHERE city_id = f.city_id
-          AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM f.date)
-          AND date != f.date
+        SELECT AVG(inner_f.temp_min), STDDEV(inner_f.temp_min),
+               AVG(inner_f.temp_max), STDDEV(inner_f.temp_max),
+               AVG(inner_f.wind_speed), STDDEV(inner_f.wind_speed),
+               AVG(inner_f.humidity), STDDEV(inner_f.humidity),
+               AVG(inner_f.uv_index), STDDEV(inner_f.uv_index)
+        FROM forecasts AS inner_f
+        WHERE inner_f.city_id = f.city_id
+          AND EXTRACT(MONTH FROM inner_f.date) = EXTRACT(MONTH FROM f.date)
+          AND inner_f.date != f.date
     ) avgs(tmin_avg, tmin_stddev, tmax_avg, tmax_stddev,
            wind_avg, wind_stddev, hum_avg, hum_stddev, uv_avg, uv_stddev) ON TRUE
     WHERE (p_city_id IS NULL OR f.city_id = p_city_id)

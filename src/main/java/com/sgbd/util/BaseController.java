@@ -56,6 +56,12 @@ public abstract class BaseController {
         // Abonare la schimbări globale
         SessionManager.getInstance().addCityChangeListener(this::onCityChangedInternal);
         SessionManager.getInstance().addDateChangeListener(this::onDateChangedInternal);
+        SessionManager.getInstance().addRefreshListener(() -> {
+            City city = SessionManager.getInstance().getSelectedCity();
+            if (city != null) {
+                onCityChangedInternal(city);
+            }
+        });
 
         return rootContainer;
     }
