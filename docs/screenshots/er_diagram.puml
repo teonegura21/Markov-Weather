@@ -1,5 +1,9 @@
 @startuml
-scale 2
+skinparam defaultFontSize 16
+skinparam classFontSize 16
+skinparam classAttributeFontSize 13
+skinparam nodesep 30
+skinparam ranksep 60
 !theme plain
 skinparam linetype ortho
 skinparam classAttributeIconSize 0
