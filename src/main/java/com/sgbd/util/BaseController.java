@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -36,6 +37,9 @@ public abstract class BaseController {
 
         contentBox = new VBox(0);
         contentBox.getStyleClass().add("tab-content");
+        contentBox.setAlignment(Pos.TOP_CENTER);
+        contentBox.setMaxWidth(Double.MAX_VALUE);
+        contentBox.setMaxHeight(Double.MAX_VALUE);
 
         loadingIndicator = new ProgressIndicator();
         loadingIndicator.setPrefSize(32, 32);
@@ -45,6 +49,8 @@ public abstract class BaseController {
 
         errorLabel = new Label();
         errorLabel.getStyleClass().add("tab-error");
+        errorLabel.setAlignment(Pos.CENTER);
+        errorLabel.setMaxWidth(Double.MAX_VALUE);
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
 

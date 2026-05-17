@@ -72,6 +72,9 @@ public class MapController {
 
     private AnimationTimer animator;
     private Timeline refreshTimeline;
+    private Timeline animationTimeline;
+    private Button playBtn;
+    private Button stopBtn;
     private Label lastUpdateLabel;
 
     private double sunRotationAngle = 0;
@@ -167,10 +170,21 @@ public class MapController {
         lblData.setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: bold;");
         datePicker = new DatePicker(LocalDate.now());
         datePicker.setPrefWidth(140);
+        datePicker.setOnAction(e -> loadData());
         Button loadBtn = new Button("Afișează hartă");
         loadBtn.setOnAction(e -> loadData());
 
-        topBar.getChildren().addAll(lblData, datePicker, loadBtn);
+        playBtn = new Button("▶");
+        stopBtn = new Button("⏹");
+        String animBtnStyle = "-fx-background-color: rgba(30,41,59,0.9); -fx-text-fill: #e2e8f0; -fx-font-weight: bold; -fx-font-size: 14px; -fx-min-width: 32px; -fx-min-height: 28px; -fx-cursor: hand;";
+        playBtn.setStyle(animBtnStyle);
+        stopBtn.setStyle(animBtnStyle);
+        stopBtn.setVisible(false);
+
+        playBtn.setOnAction(e -> handlePlayClick());
+        stopBtn.setOnAction(e -> stopAnimation());
+
+        topBar.getChildren().addAll(lblData, datePicker, loadBtn, playBtn, stopBtn);
 
         // Straturi canvas: static (harta + orașe) și dinamic (particule)
         staticCanvas = new Canvas(CANVAS_W, CANVAS_H);
@@ -194,7 +208,6 @@ public class MapController {
         // Container principal cu legendă și status
         StackPane canvasContainer = new StackPane();
         canvasContainer.setPrefSize(CANVAS_W, CANVAS_H);
-        canvasContainer.setMinSize(CANVAS_W, CANVAS_H);
         canvasContainer.getChildren().add(scrollPane);
 
         VBox legend = buildLegend();
@@ -223,6 +236,7 @@ public class MapController {
         HBox.setHgrow(zoomBox, Priority.ALWAYS);
         topBar.getChildren().add(zoomBox);
 
+        VBox.setVgrow(canvasContainer, Priority.ALWAYS);
         root.getChildren().addAll(topBar, canvasContainer);
 
         initParticles();
@@ -230,6 +244,60 @@ public class MapController {
         loadData();
 
         return root;
+    }
+
+    private void handlePlayClick() {
+        if (animationTimeline != null && animationTimeline.getStatus() == Timeline.Status.RUNNING) {
+            stopAnimation();
+        }
+
+        LocalDate startDate = datePicker.getValue();
+        if (startDate == null) {
+            showError("Selectează o dată de început pentru animație.");
+            return;
+        }
+
+        LocalDate endDate = LocalDate.now();
+        if (startDate.isAfter(endDate)) {
+            showError("Data selectată este în viitor. Selectează o dată trecută sau prezentă.");
+            return;
+        }
+
+        playBtn.setVisible(false);
+        stopBtn.setVisible(true);
+
+        final java.util.concurrent.atomic.AtomicReference<LocalDate> currentDate =
+            new java.util.concurrent.atomic.AtomicReference<>(startDate);
+
+        animationTimeline = new Timeline();
+        animationTimeline.setCycleCount(Timeline.INDEFINITE);
+
+        KeyFrame keyFrame = new KeyFrame(Duration.millis(800), e -> {
+            LocalDate d = currentDate.get();
+            if (d.isAfter(endDate)) {
+                stopAnimation();
+                return;
+            }
+            datePicker.setValue(d);
+            loadData();
+            currentDate.set(d.plusDays(1));
+        });
+
+        animationTimeline.getKeyFrames().add(keyFrame);
+        // Executează primul cadru imediat
+        datePicker.setValue(startDate);
+        loadData();
+        currentDate.set(startDate.plusDays(1));
+        animationTimeline.play();
+    }
+
+    private void stopAnimation() {
+        if (animationTimeline != null) {
+            animationTimeline.stop();
+            animationTimeline = null;
+        }
+        playBtn.setVisible(true);
+        stopBtn.setVisible(false);
     }
 
     private void adjustZoom(double factor) {

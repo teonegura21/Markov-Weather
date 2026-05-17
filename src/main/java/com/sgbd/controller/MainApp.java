@@ -251,7 +251,7 @@ public class MainApp extends Application {
                             updateUserArea();
                             dialog.close();
                         } else {
-                            msg.setText("Utilizator sau parolă incorectă.");
+                            msg.setText("Utilizator sau parolă incorecte.");
                         }
                     });
                 } catch (Exception ex) {

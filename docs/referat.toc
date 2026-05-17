@@ -1,50 +1,50 @@
 \babel@toc {romanian}{}\relax 
-\contentsline {section}{\numberline {1}Introducere}{3}{section.1}%
-\contentsline {subsection}{\numberline {1.1}Context si motivatie}{3}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Tehnologii utilizate}{3}{subsection.1.2}%
-\contentsline {subsection}{\numberline {1.3}Arhitectura generala}{3}{subsection.1.3}%
-\contentsline {section}{\numberline {2}Cerinte de business identificate}{4}{section.2}%
-\contentsline {section}{\numberline {3}Normalizarea bazei de date}{6}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Relatia universala initiala}{6}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Analiza dependentelor functionale}{6}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Procesul de normalizare}{6}{subsection.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.1}1NF --- Forma normala 1}{6}{subsubsection.3.3.1}%
+\contentsline {section}{\numberline {1}Introducere}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Context si motivatie}{4}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Tehnologii utilizate}{4}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Arhitectura generala}{4}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Cerinte de business identificate}{5}{section.2}%
+\contentsline {section}{\numberline {3}Normalizarea bazei de date}{7}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Relatia universala initiala}{7}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Analiza dependentelor functionale}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Procesul de normalizare}{7}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}1NF --- Forma normala 1}{7}{subsubsection.3.3.1}%
 \contentsline {subsubsection}{\numberline {3.3.2}2NF --- Eliminarea dependentelor partiale}{7}{subsubsection.3.3.2}%
-\contentsline {subsubsection}{\numberline {3.3.3}3NF --- Eliminarea dependentelor tranzitive}{7}{subsubsection.3.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.4}BCNF --- Forma normala Boyce-Codd}{7}{subsubsection.3.3.4}%
-\contentsline {subsection}{\numberline {3.4}Extensia pentru pipeline ML}{8}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.3.3}3NF --- Eliminarea dependentelor tranzitive}{8}{subsubsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.4}BCNF --- Forma normala Boyce-Codd}{8}{subsubsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.4}Extensia pentru algoritmii de Machine Learning}{8}{subsection.3.4}%
 \contentsline {section}{\numberline {4}Diagrama entitate-asociere (UML)}{9}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Entitati identificate}{9}{subsection.4.1}%
 \contentsline {subsection}{\numberline {4.2}Asocieri si multiplicitati}{10}{subsection.4.2}%
 \contentsline {subsection}{\numberline {4.3}Justificarea cheilor primare si straine}{10}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Tipuri de constrangeri}{10}{subsection.4.4}%
-\contentsline {section}{\numberline {5}Script de creare a tabelelor}{12}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Migrarea 001: Tari}{12}{subsection.5.1}%
+\contentsline {subsection}{\numberline {4.4}Tipuri de constrangeri}{11}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Script de creare a tabelelor}{11}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Migrarea 001: Tari}{11}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Migrarea 002: Orase}{12}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Migrarea 003: Prognoze zilnice}{13}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.3}Migrarea 003: Prognoze zilnice}{12}{subsection.5.3}%
 \contentsline {subsection}{\numberline {5.4}Migrarea 015: Triggeri}{13}{subsection.5.4}%
 \contentsline {subsection}{\numberline {5.5}Migrarea 018: Trigger de audit}{14}{subsection.5.5}%
-\contentsline {section}{\numberline {6}Prezentarea aplicatiei si a interfetei grafice}{16}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Tab-ul ``Acum" --- Dashboard Unificat}{16}{subsection.6.1}%
+\contentsline {section}{\numberline {6}Prezentarea aplicatiei si a interfetei grafice}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Tab-ul ``Acum" --- Dashboard Unificat}{15}{subsection.6.1}%
 \contentsline {subsection}{\numberline {6.2}Tab-ul ``Harta"}{17}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Tab-ul ``Mai multe"}{17}{subsection.6.3}%
-\contentsline {section}{\numberline {7}Algoritmi complexi implementati in PL/pgSQL}{19}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Pipeline ML --- Prezentare generala}{19}{subsection.7.1}%
+\contentsline {subsection}{\numberline {6.3}Tab-ul ``Mai multe"}{18}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Algoritmi complexi implementati in PL/pgSQL}{18}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Algoritmi de Machine Learning --- Prezentare generala}{19}{subsection.7.1}%
 \contentsline {subsection}{\numberline {7.2}Vectorizarea meteo --- \texttt {sp\_build\_weather\_vector}}{19}{subsection.7.2}%
 \contentsline {subsection}{\numberline {7.3}Inferenta fuzzy --- \texttt {sp\_compute\_recipe\_scores}}{20}{subsection.7.3}%
 \contentsline {subsubsection}{\numberline {7.3.1}Functii de apartenenta}{20}{subsubsection.7.3.1}%
 \contentsline {subsubsection}{\numberline {7.3.2}Detectorul de canicula}{20}{subsubsection.7.3.2}%
-\contentsline {subsection}{\numberline {7.4}Lanturi Markov de ordin 2 --- \texttt {sp\_build\_markov\_tensor}}{21}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.4}Lanturi Markov de ordin 2 --- \texttt {sp\_build\_markov\_tensor}}{20}{subsection.7.4}%
 \contentsline {subsection}{\numberline {7.5}Modelul Markov Ascuns (HMM) --- \texttt {fn\_update\_hmm\_emission}}{21}{subsection.7.5}%
 \contentsline {subsection}{\numberline {7.6}Simulare Monte Carlo --- \texttt {sp\_run\_monte\_carlo}}{22}{subsection.7.6}%
 \contentsline {subsubsection}{\numberline {7.6.1}Algoritmul de esantionare a regimului urmator}{22}{subsubsection.7.6.1}%
 \contentsline {subsubsection}{\numberline {7.6.2}Generarea temperaturii conditionate de regim}{23}{subsubsection.7.6.2}%
 \contentsline {subsubsection}{\numberline {7.6.3}Extragerea percentilelor}{23}{subsubsection.7.6.3}%
-\contentsline {subsection}{\numberline {7.7}Detectia anomaliilor --- \texttt {sp\_detect\_anomalies}}{23}{subsection.7.7}%
-\contentsline {subsection}{\numberline {7.8}Clasificarea oraselor similare --- \texttt {sp\_classify\_similar\_cities}}{24}{subsection.7.8}%
-\contentsline {subsection}{\numberline {7.9}Scorul prognozelor si reputatia}{24}{subsection.7.9}%
-\contentsline {subsubsection}{\numberline {7.9.1}Scorul unei prognoze --- \texttt {sp\_forecast\_score}}{24}{subsubsection.7.9.1}%
-\contentsline {subsubsection}{\numberline {7.9.2}Reputatia utilizatorilor --- \texttt {sp\_user\_reputation}}{24}{subsubsection.7.9.2}%
-\contentsline {section}{\numberline {8}Testare si validare}{25}{section.8}%
-\contentsline {section}{\numberline {9}Bibliografie}{25}{section.9}%
-\contentsline {section}{\numberline {10}Concluzii}{27}{section.10}%
+\contentsline {subsection}{\numberline {7.7}Detectia anomaliilor --- \texttt {sp\_detect\_anomalies}}{25}{subsection.7.7}%
+\contentsline {subsection}{\numberline {7.8}Clasificarea oraselor similare --- \texttt {sp\_classify\_similar\_cities}}{26}{subsection.7.8}%
+\contentsline {subsection}{\numberline {7.9}Scorul prognozelor si reputatia}{26}{subsection.7.9}%
+\contentsline {subsubsection}{\numberline {7.9.1}Scorul unei prognoze --- \texttt {sp\_forecast\_score}}{26}{subsubsection.7.9.1}%
+\contentsline {subsubsection}{\numberline {7.9.2}Reputatia utilizatorilor --- \texttt {sp\_user\_reputation}}{27}{subsubsection.7.9.2}%
+\contentsline {section}{\numberline {8}Testare si validare}{27}{section.8}%
+\contentsline {section}{\numberline {9}Bibliografie}{27}{section.9}%
+\contentsline {section}{\numberline {10}Concluzii}{29}{section.10}%

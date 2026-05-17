@@ -100,7 +100,7 @@
 }
 
 \title{\Huge\textbf{Prognoza Meteo}\\[0.3cm]
-\Large Aplicatie de prognoza meteo probabilistica cu pipeline ML in PostgreSQL\\[0.5cm]
+\Large Aplicatie de prognoza meteo probabilistica cu algoritmi de Machine Learning in PostgreSQL\\[0.5cm]
 \large Referat --- Proiect SGBD}
 \author{
 \textbf{Negura Alexandru Teodor}\\
@@ -129,9 +129,9 @@ Universitatea ``Alexandru Ioan Cuza" din Iasi
 
 \subsection{Context si motivatie}
 
-Prezenta lucrare descrie dezvoltarea unei aplicatii de prognoza meteo pentru orase din Europa, realizata in cadrul disciplinei \textbf{Sisteme de Gestionare a Bazelor de Date (SGBD)}. Proiectul imbina concepte avansate de modelare a datelor, programare in PL/pgSQL si implementarea unui pipeline de machine learning direct la nivelul serverului de baze de date.
+Prezenta lucrare descrie dezvoltarea unei aplicatii de prognoza meteo pentru orase din Europa, realizata in cadrul disciplinei \textbf{Sisteme de Gestionare a Bazelor de Date (SGBD)}. Proiectul imbina concepte avansate de modelare a datelor, programare in PL/pgSQL si implementarea unor algoritmi de Machine Learning direct la nivelul serverului de baze de date.
 
-Spre deosebire de solutiile conventionale care externalizeaza logica predictiei catre biblioteci Python sau servicii cloud, abordarea noastra transfera \textbf{intreg pipeline-ul de predictie} (vectorizare, clustering, lanturi Markov, Modele Markov Ascunse, simulare Monte Carlo) in interiorul PostgreSQL. Acest design are multiple avantaje:
+Spre deosebire de solutiile conventionale care externalizeaza logica predictiei catre biblioteci Python sau servicii cloud, abordarea noastra transfera \textbf{toti algoritmii de predictie} (vectorizare, clustering, lanturi Markov, Modele Markov Ascunse, simulare Monte Carlo) in interiorul PostgreSQL. Acest design are multiple avantaje:
 \begin{itemize}[noitemsep]
     \item \textbf{Performanta}: predictiile sunt calculate direct acolo unde rezida datele, eliminand latenta de retea;
     \item \textbf{Tranzactionalitate}: actualizarile modelului si ale datelor sunt atomice;
@@ -165,17 +165,17 @@ Aplicatia urmeaza o arhitectura pe trei straturi:
 \begin{enumerate}
     \item \textbf{Stratul de prezentare} --- interfata JavaFX cu 3 tab-uri: Dashboard unificat (prognoza curenta, evolutie, predictii, clasamente, anomalii), Harta interactiva (Europa cu 40 de tari si 66 de orase), si Management cont/comunitate.
     \item \textbf{Stratul de servicii} --- clase Java in pachetul \texttt{com.sgbd.service} care apeleaza proceduri stocate prin JDBC. Nu exista ORM; fiecare serviciu foloseste explicit \texttt{Connection}, \texttt{PreparedStatement} si \texttt{ResultSet} in blocuri \texttt{try-with-resources}.
-    \item \textbf{Stratul de date} --- PostgreSQL cu 21 de tabele, 39 de proceduri stocate, 6 functii, 3 triggeri si 20+ indecsi specializati pentru pipeline-ul ML.
+    \item \textbf{Stratul de date} --- PostgreSQL cu 21 de tabele, 39 de proceduri stocate, 6 functii, 3 triggeri si 20+ indecsi specializati pentru algoritmii de Machine Learning.
 \end{enumerate}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{screenshots/diagrama_arhitectura.png}
+\includegraphics[width=0.60\textwidth]{screenshots/diagrama_arhitectura.png}
 \caption{Diagrama arhitecturala a aplicatiei (din fisierul HTML interactiv)}
 \label{fig:arhitectura}
 \end{figure}
 
-Diagrama arhitecturala interactiva (fisierul \texttt{prognoza-meteo-architecture.html} din repository) prezinta vizual cele trei straturi ale aplicatiei (JavaFX, Servicii Java/JDBC, PostgreSQL), procedurile stocate, fluxurile de date catre API-ul Open-Meteo si pipeline-ul ML. Se recomanda includerea unui screenshot fullscreen al acestei diagrame in locul casetei de mai sus.
+Diagrama arhitecturala interactiva (fisierul \texttt{prognoza-meteo-architecture.html} din repository) prezinta vizual cele trei straturi ale aplicatiei (JavaFX, Servicii Java/JDBC, PostgreSQL), procedurile stocate, fluxurile de date catre API-ul Open-Meteo si algoritmii de Machine Learning. Se recomanda includerea unui screenshot fullscreen al acestei diagrame in locul casetei de mai sus.
 
 % ========== 2. CERINTE DE BUSINESS ==========
 \section{Cerinte de business identificate}
@@ -219,7 +219,7 @@ Orasele pot fi clasate dupa 6 criterii (cel mai cald, cel mai frig, cel mai vant
 \end{infobox}
 
 \begin{infobox}[CB-10: Avertizare automata a utilizatorilor]
-La detectarea unui eveniment extrem, sistemul notifica automat toti utilizatorii care au interactionat recent cu prognozele din zona afectata.
+La detectarea unui eveniment extrem, procedura stocata \texttt{sp\_auto\_warn\_users} notifica automat toti utilizatorii care au interactionat recent cu prognozele din zona afectata.
 \end{infobox}
 
 % ========== 3. NORMALIZAREA BAZEI DE DATE ==========
@@ -301,9 +301,9 @@ O relatie este in BCNF daca pentru fiecare DF $X \rightarrow Y$, $X$ este superc
     \item $R_5, R_6$: cheile sunt compuse si toate DF sunt cheie $\rightarrow$ atribut $\Rightarrow$ \textbf{BCNF}.
 \end{itemize}
 
-\subsection{Extensia pentru pipeline ML}
+\subsection{Extensia pentru algoritmii de Machine Learning}
 
-Pipeline-ul de machine learning introduce tabele suplimentare care, prin design, sunt deja normalizate:
+Algoritmii de Machine Learning introduc tabele suplimentare care, prin design, sunt deja normalizate:
 
 \begin{itemize}
     \item \texttt{weather\_vectors}: cheia este compusa $(\text{city\_id}, \text{forecast\_date})$. Vectorul de 25 de dimensiuni este un atribut compus care reprezinta o singura valoare (vectorul caracteristic al zilei), deci respecta 1NF.
@@ -339,7 +339,7 @@ Pipeline-ul de machine learning introduce tabele suplimentare care, prin design,
 \caption{Verificarea formelor normale (toate tabelele sunt in BCNF)}
 \end{table}
 
-\newpage
+\vspace{0.8cm}
 
 % ========== 4. DIAGRAMA E/A ==========
 \section{Diagrama entitate-asociere (UML)}
@@ -417,12 +417,12 @@ Conform teoriei bazelor de date, exista 5 tipuri de constrangeri. Iata cum sunt 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{screenshots/er_diagram.png}
+\includegraphics[width=0.60\textwidth]{screenshots/er_diagram.png}
 \caption{Diagrama entitate-relatie (UML) a bazei de date}
 \label{fig:er}
 \end{figure}
 
-\newpage
+\vspace{0.8cm}
 
 % ========== 5. SCRIPT DE CREARE TABELE ==========
 \section{Script de creare a tabelelor}
@@ -586,7 +586,7 @@ EXECUTE FUNCTION fn_log_forecast_change();
     \item Acest pattern de audit este extensibil la orice tabela critica.
 \end{itemize}
 
-\newpage
+\vspace{0.8cm}
 
 % ========== 6. PREZENTAREA APLICATIEI ==========
 \section{Prezentarea aplicatiei si a interfetei grafice}
@@ -600,12 +600,12 @@ Acest tab combina intr-o singura vedere scrollabila toate informatiile meteorolo
 \begin{enumerate}
     \item \textbf{Sectiunea Hero}: afiseaza pictograma mare (72px), temperatura curenta, conditia vremii si o banda de alerta (daca exista avertizare meteo).
     \item \textbf{Prognoza orara}: un scroll orizontal cu temperaturi pentru fiecare ora din ziua curenta.
-    \item \textbf{Prognoza pe zile}: un scroll orizontal cu carduri pentru urmatoarele 5 zile.
+    \item \textbf{Prognoza pe zile}: un scroll orizontal cu carduri centrate pentru urmatoarele 10 zile.
     \item \textbf{Detalii}: grid cu umiditate, viteza vantului, indice UV, presiune atmosferica, ore de soare, punct de roua.
-    \item \textbf{Evolutie temperatura}: grafic LineChart cu selectare perioada (7 zile / 30 zile / 1 an).
+    \item \textbf{Evolutie temperatura}: grafic LineChart cu selectare perioada (7 zile / 30 zile / 90 zile), cu animatii dezactivate pentru stabilitate la switch intre intervale.
     \item \textbf{Predictii probabilistice (10 zile)}: grafic cu benzile P10, P50, P90 pentru temperaturi.
     \item \textbf{Comparatie istorica}: butoane toggle Zi curenta / Lunar / Anual.
-    \item \textbf{Probabilitati meteo}: carduri cu probabilitati pentru precipitatii, canicula, furtuna.
+    \item \textbf{Probabilitati meteo}: grid 2$\times$2 cu probabilitati agregate (maxim pe 10 zile) pentru ploaie, furtuna, ceata si canicula, cu bare colorate proportional.
     \item \textbf{Anomalii detectate}: lista cu zilele in care parametrii au depasit $2\sigma$.
     \item \textbf{Prognoze contestate}: prognoze cu erori mari identificate automat.
     \item \textbf{Clasamente orase}: top 5 pentru 6 criterii (cel mai cald, frig, vant, umiditate, avertizari, extreme).
@@ -614,61 +614,59 @@ Acest tab combina intr-o singura vedere scrollabila toate informatiile meteorolo
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Inserati aici screenshot-ul tab-ului ``Acum"]}\\[0.3cm]
-\textit{Capturati ecranul aplicatiei ruland }\texttt{mvn javafx:run}\textit{, selectand un oras}\\[0.3cm]
-\textbf{Nume fisier sugerat:} \texttt{screenshots/tab\_acum.png}
-\vspace{2cm}
-}}
-\caption{Tab-ul ``Acum" --- Dashboard unificat}
+\includegraphics[width=0.60\textwidth]{screenshots/vremea_oras_prognoza.png}
+\caption{Tab-ul ``Acum" --- Dashboard unificat (prognoza 10 zile, probabilitati, clasamente, anomalii)}
 \label{fig:tab_acum}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{screenshots/probabilitati_anomalii.png}
+\caption{Carduri de probabilitati meteo si anomalii detectate}
+\label{fig:prob_cards}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{screenshots/detalii.png}
+\caption{Detalii meteorologice --- umiditate, vant, UV, presiune, punct de roua}
+\label{fig:detalii}
 \end{figure}
 
 \subsection{Tab-ul ``Harta"}
 
-O harta interactiva a Europei desenata pe canvas JavaFX 2.5D. Fiecare tara este reprezentata ca poligon colorat in functie de temperatura medie. Orasele majore afiseaza badge-uri rotunde cu temperatura minima (stanga, albastru) si maxima (dreapta, rosu).
+O harta interactiva a Europei desenata pe canvas JavaFX (1200$\times$800 px) cu 40 de poligoane de tari colorate in functie de temperatura medie (pseudo-relief). Orasele majore afiseaza badge-uri cu temperaturi min/max. Harta include: zoom in/out (0.5$\times$--3.0$\times$), panning prin drag, selector de data si buton Play care animeaza automat evolutia vremii de la data selectata pana la ziua curenta, cadru cu cadru.
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Inserati aici screenshot-ul tab-ului ``Harta"]}\\[0.3cm]
-\textbf{Nume fisier sugerat:} \texttt{screenshots/tab\_harta.png}
-\vspace{2cm}
-}}
-\caption{Tab-ul ``Harta" --- Vizualizare Europei}
+\includegraphics[width=0.60\textwidth]{screenshots/harta.png}
+\caption{Tab-ul ``Harta" --- Europa 40 tari, 93 orase, zoom/pan, play evolutie}
 \label{fig:tab_harta}
 \end{figure}
 
 \subsection{Tab-ul ``Mai multe"}
 
-Contine setari (unitati de temperatura, unitati de vant, sincronizare automata), sectiunea de comunitate (comentarii si voturi) si informatii despre aplicatie.
+Contine autentificare reala cu verificare in baza de date (tabela \texttt{users}, parola criptata SHA-256), setari (unitati de temperatura, unitati de vant, sincronizare automata), sectiunea de comunitate (comentarii si voturi) si informatii despre aplicatie.\newline\indent\textbf{User de test}: \texttt{username=user}, \texttt{password=user}.
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering
-\vspace{2cm}
-\textbf{[Inserati aici screenshot-ul dialogului de comentarii]}\\[0.3cm]
-\textbf{Nume fisier sugerat:} \texttt{screenshots/dialog\_comentarii.png}
-\vspace{2cm}
-}}
-\caption{Dialogul de comentarii si voturi}
-\label{fig:dialog_comentarii}
+\includegraphics[width=0.60\textwidth]{screenshots/orase_clasamente_similare.png}
+\caption{Clasamente orase si orase similare}
+\label{fig:clasamente}
 \end{figure}
 
-\newpage
+\vspace{0.8cm}
 
 % ========== 7. ALGORITMI COMPLECSI PE SERVER ==========
 \section{Algoritmi complexi implementati in PL/pgSQL}
 
 Aceasta sectiune prezinta in detaliu algoritmii non-triviali implementati la nivelul serverului PostgreSQL. Acestia reprezinta nucleul valorii adaugate a proiectului si justifica punctajul maxim pentru complexitate.
 
-\subsection{Pipeline ML --- Prezentare generala}
+\subsection{Algoritmi de Machine Learning --- Prezentare generala}
 
-Pipeline-ul de machine learning ruleaza in 7 etape, toate implementate ca proceduri stocate:
+Algoritmii de Machine Learning ruleaza in 7 etape, toate implementate ca proceduri stocate:
 
-\begin{algobox}[Pipeline ML end-to-end]
+\begin{algobox}[Algoritmi de Machine Learning end-to-end]
 \begin{enumerate}
     \item \texttt{sp\_build\_weather\_vector}: construieste vectori 25D din datele brute;
     \item \texttt{sp\_compute\_recipe\_scores}: aplica detectoare fuzzy pentru 6 fenomene meteo;
@@ -858,14 +856,23 @@ Aceste benzi de incredere sunt salvate in \texttt{monte\_carlo\_predictions} si 
 
 \begin{figure}[H]
 \centering
-\fbox{\parbox{0.85\textwidth}{\centering
-\vspace{1.5cm}
-\textbf{[Inserati aici screenshot cu graficul predictiilor probabilistice]}\\[0.3cm]
-\textbf{Nume fisier sugerat:} \texttt{screenshots/predictii\_probabilistice.png}
-\vspace{1.5cm}
-}}
+\includegraphics[width=0.60\textwidth]{screenshots/predictii_probabilistice.png}
 \caption{Predictii probabilistice --- benzile P10/P50/P90}
 \label{fig:pred_prob}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{screenshots/evolutie_temperatura.png}
+\caption{Evolutia temperaturii pe 30 de zile}
+\label{fig:evolutie}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{screenshots/comparatie_istorica.png}
+\caption{Comparatie istorica --- diferente fata de mediile climatologice}
+\label{fig:comparatie}
 \end{figure}
 
 \subsection{Detectia anomaliilor --- \texttt{sp\_detect\_anomalies}}
@@ -924,7 +931,7 @@ Voturile utilizatorilor cu reputatie mai mare au pondere mai mare, dar cresterea
 
 Factorul logaritmic $\ln(1 + n + 1)$ recompenseaza participarea activa (comentarii), dar cu diminuarea returnarilor --- primul comentariu aduce cel mai mult, al zecelea aduce mai putin.
 
-\newpage
+\vspace{0.8cm}
 
 % ========== 8. TESTARE SI VALIDARE ==========
 \section{Testare si validare}
@@ -947,7 +954,7 @@ Proiectul include un set comprehensiv de teste unitare si de integrare:
 \texttt{DatabaseInitializerTest} & Migrari DB & 3 & Pass \\
 \texttt{ClusteringServiceTest} & K-means, silhouette & 9 & Pass \\
 \texttt{HmmTrainingServiceTest} & Forward-backward, Baum-Welch & 5 & Pass \\
-\texttt{MlPipelineIntegrationTest} & Pipeline end-to-end & 1 & Pass \\
+\texttt{MlPipelineIntegrationTest} & Flux end-to-end & 1 & Pass \\
 \midrule
 \textbf{TOTAL} & & \textbf{63} & \textbf{63 Pass} \\
 \bottomrule
@@ -955,7 +962,7 @@ Proiectul include un set comprehensiv de teste unitare si de integrare:
 \caption{Rezultate teste}
 \end{table}
 
-Testul de integrare \texttt{MlPipelineIntegrationTest} valideaza intregul pipeline ML cu date reale de la Open-Meteo pentru Bucuresti: importa 365 de zile istorice, construieste vectori, ruleaza clustering, Markov, HMM si Monte Carlo, apoi verifica consistenta percentilelor ($\text{P10} \leq \text{P50} \leq \text{P90}$) si faptul ca toate probabilitatile sunt in $[0, 1]$.
+Testul de integrare \texttt{MlPipelineIntegrationTest} valideaza intregul flux de algoritmi de Machine Learning cu date reale de la Open-Meteo pentru Bucuresti: importa 365 de zile istorice, construieste vectori, ruleaza clustering, Markov, HMM si Monte Carlo, apoi verifica consistenta percentilelor ($\text{P10} \leq \text{P50} \leq \text{P90}$) si faptul ca toate probabilitatile sunt in $[0, 1]$.
 
 % ========== 9. BIBLIOGRAFIE ==========
 \section{Bibliografie}
@@ -989,7 +996,7 @@ Testul de integrare \texttt{MlPipelineIntegrationTest} valideaza intregul pipeli
 % ========== 10. CONCLUZII ==========
 \section{Concluzii}
 
-Prezentul proiect demonstreaza ca un sistem de gestiune a bazelor de date relationale (PostgreSQL) poate gazdui nu doar operatii CRUD, ci si algoritmi sofisticati de machine learning si simulare statistica. Prin transferarea pipeline-ului de predictie la nivelul serverului, am obtinut:
+Prezentul proiect demonstreaza ca un sistem de gestiune a bazelor de date relationale (PostgreSQL) poate gazdui nu doar operatii CRUD, ci si algoritmi sofisticati de machine learning si simulare statistica. Prin transferarea algoritmilor de predictie la nivelul serverului, am obtinut:
 
 \begin{itemize}
     \item \textbf{Coerenta tranzactionala}: actualizarile datelor si ale modelului sunt atomice;

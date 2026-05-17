@@ -31,6 +31,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
@@ -281,6 +282,7 @@ public class UnifiedDashboardController extends BaseController {
         // Wrap in a centered HBox so content stays centered when narrower than viewport
         HBox hourlyWrapper = new HBox(hourlyBox);
         hourlyWrapper.setAlignment(Pos.CENTER);
+        hourlyWrapper.setMaxWidth(Double.MAX_VALUE);
         hourlyWrapper.setStyle("-fx-background: transparent;");
 
         ScrollPane hourlyScroll = new ScrollPane(hourlyWrapper);
@@ -288,6 +290,7 @@ public class UnifiedDashboardController extends BaseController {
         hourlyScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         hourlyScroll.setStyle("-fx-background: transparent;");
         hourlyScroll.setFitToHeight(true);
+        hourlyScroll.setFitToWidth(true);
         hourlyScroll.setMaxWidth(Double.MAX_VALUE);
 
         innerContent.getChildren().addAll(hourlyTitle, hourlyScroll);
@@ -305,6 +308,7 @@ public class UnifiedDashboardController extends BaseController {
         // Wrap in a centered HBox so content stays centered when narrower than viewport
         HBox dailyWrapper = new HBox(dailyBox);
         dailyWrapper.setAlignment(Pos.CENTER);
+        dailyWrapper.setMaxWidth(Double.MAX_VALUE);
         dailyWrapper.setStyle("-fx-background: transparent;");
 
         ScrollPane dailyScroll = new ScrollPane(dailyWrapper);
@@ -312,6 +316,7 @@ public class UnifiedDashboardController extends BaseController {
         dailyScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         dailyScroll.setStyle("-fx-background: transparent;");
         dailyScroll.setFitToHeight(true);
+        dailyScroll.setFitToWidth(true);
         dailyScroll.setMaxWidth(Double.MAX_VALUE);
 
         innerContent.getChildren().addAll(dailyTitle, dailyScroll);
@@ -359,6 +364,9 @@ public class UnifiedDashboardController extends BaseController {
         evolutionChart.getStyleClass().add("chart");
         evolutionChart.setLegendVisible(true);
         evolutionChart.setCreateSymbols(true);
+        evolutionChart.setAnimated(false);
+        xAxis.setAnimated(false);
+        yAxis.setAnimated(false);
 
         historyList = new VBox(4);
         historyList.setAlignment(Pos.CENTER);
@@ -552,6 +560,8 @@ public class UnifiedDashboardController extends BaseController {
                 List<Forecast> evo = forecastService.getCityWeatherEvolution(city.getId(), start, end);
                 Platform.runLater(() -> renderEvolution(evo, start, end));
             } catch (Exception e) {
+                java.util.logging.Logger.getLogger(getClass().getName())
+                    .warning("Eroare încărcare evoluție (" + currentRangeDays + " zile): " + e.getMessage());
                 Platform.runLater(() -> renderEvolution(new ArrayList<>(), start, end));
             }
         }).start();
@@ -570,7 +580,7 @@ public class UnifiedDashboardController extends BaseController {
                 List<PredictionEngineService.MonteCarloResult> finalResults = results;
                 Platform.runLater(() -> {
                     renderProbabilistic(finalResults);
-                    renderProbabilityCards(finalResults.isEmpty() ? null : finalResults.get(0));
+                    renderProbabilityCards(finalResults);
                 });
             }
         }).start();
@@ -700,7 +710,7 @@ public class UnifiedDashboardController extends BaseController {
 
     private void renderDaily(List<Forecast> forecasts) {
         dailyBox.getChildren().clear();
-        for (int i = 0; i < Math.min(forecasts.size(), 5); i++) {
+        for (int i = 0; i < Math.min(forecasts.size(), 10); i++) {
             dailyBox.getChildren().add(createDailyMiniCard(forecasts.get(i), i == 0));
         }
     }
@@ -774,17 +784,17 @@ public class UnifiedDashboardController extends BaseController {
         }
 
         evolutionChart.getData().addAll(minSeries, avgSeries, maxSeries);
-        Platform.runLater(() -> {
-            if (minSeries.getNode() != null) {
-                minSeries.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2px;");
-            }
-            if (avgSeries.getNode() != null) {
-                avgSeries.getNode().setStyle("-fx-stroke: #a78bfa; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
-            }
-            if (maxSeries.getNode() != null) {
-                maxSeries.getNode().setStyle("-fx-stroke: #f97316; -fx-stroke-width: 2px;");
-            }
-        });
+        evolutionChart.layout();
+
+        if (minSeries.getNode() != null) {
+            minSeries.getNode().setStyle("-fx-stroke: #38bdf8; -fx-stroke-width: 2px;");
+        }
+        if (avgSeries.getNode() != null) {
+            avgSeries.getNode().setStyle("-fx-stroke: #a78bfa; -fx-stroke-width: 2px; -fx-stroke-dash-array: 5 5;");
+        }
+        if (maxSeries.getNode() != null) {
+            maxSeries.getNode().setStyle("-fx-stroke: #f97316; -fx-stroke-width: 2px;");
+        }
     }
 
     private void renderProbabilistic(List<PredictionEngineService.MonteCarloResult> results) {
@@ -867,21 +877,33 @@ public class UnifiedDashboardController extends BaseController {
         }
     }
 
-    private void renderProbabilityCards(PredictionEngineService.MonteCarloResult result) {
+    private void renderProbabilityCards(List<PredictionEngineService.MonteCarloResult> results) {
         probCardsBox.getChildren().clear();
-        if (result == null) {
+        if (results == null || results.isEmpty()) {
             Label emptyLabel = new Label("Nu există date de probabilitate");
             emptyLabel.setAlignment(Pos.CENTER);
             emptyLabel.setMaxWidth(Double.MAX_VALUE);
             probCardsBox.getChildren().add(emptyLabel);
             return;
         }
-        probCardsBox.getChildren().addAll(
-            createProbCard("🌧️", "Șanse ploaie", result.getPrecipProb()),
-            createProbCard("⛈️", "Risc furtună", result.getStormProb()),
-            createProbCard("🌫️", "Risc ceață", result.getFogProb()),
-            createProbCard("🔥", "Risc caniculă", result.getHeatwaveProb())
-        );
+
+        double maxPrecip = results.stream().mapToDouble(PredictionEngineService.MonteCarloResult::getPrecipProb).max().orElse(0);
+        double maxStorm  = results.stream().mapToDouble(PredictionEngineService.MonteCarloResult::getStormProb).max().orElse(0);
+        double maxFog    = results.stream().mapToDouble(PredictionEngineService.MonteCarloResult::getFogProb).max().orElse(0);
+        double maxHeat   = results.stream().mapToDouble(PredictionEngineService.MonteCarloResult::getHeatwaveProb).max().orElse(0);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setAlignment(Pos.CENTER);
+        grid.setMaxWidth(Double.MAX_VALUE);
+
+        grid.add(createProbCard("🌧️", "Șanse ploaie", maxPrecip), 0, 0);
+        grid.add(createProbCard("⛈️", "Risc furtună", maxStorm),  1, 0);
+        grid.add(createProbCard("🌫️", "Risc ceață", maxFog),      0, 1);
+        grid.add(createProbCard("🔥", "Risc caniculă", maxHeat),   1, 1);
+
+        probCardsBox.getChildren().add(grid);
     }
 
     private void renderRankings(List<CityRanking> hottest, List<CityRanking> coldest,
@@ -1055,48 +1077,50 @@ public class UnifiedDashboardController extends BaseController {
     }
 
     private VBox createProbCard(String emoji, String label, double prob) {
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(12));
+        VBox card = new VBox(8);
+        card.setPadding(new Insets(14));
         card.getStyleClass().add("glass-card");
         card.setAlignment(Pos.CENTER);
-
-        HBox top = new HBox(10);
-        top.setAlignment(Pos.CENTER);
+        card.setMinWidth(180);
+        card.setMaxWidth(240);
+        card.setPrefWidth(220);
 
         Label ic = new Label(emoji);
-        ic.setStyle("-fx-font-size: 22px;");
+        ic.setStyle("-fx-font-size: 28px;");
+        ic.setAlignment(Pos.CENTER);
+        ic.setMaxWidth(Double.MAX_VALUE);
 
         Label lbl = new Label(label);
-        lbl.setStyle("-fx-font-size: 14px; -fx-text-fill: #e2e8f0;");
+        lbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #94a3b8;");
+        lbl.setAlignment(Pos.CENTER);
+        lbl.setMaxWidth(Double.MAX_VALUE);
 
         Label val = new Label(String.format("%.0f%%", prob * 100));
-        val.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #f8fafc;");
-        HBox.setHgrow(val, Priority.ALWAYS);
+        String valColor = prob > 0.5 ? "#ef4444" : prob > 0.25 ? "#f59e0b" : "#22c55e";
+        val.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: " + valColor + ";");
         val.setAlignment(Pos.CENTER);
+        val.setMaxWidth(Double.MAX_VALUE);
 
-        top.getChildren().addAll(ic, lbl, val);
-
+        double pct = Math.max(0, Math.min(1, prob));
+        String barColor = prob > 0.5 ? "#ef4444" : prob > 0.25 ? "#f59e0b" : "#22c55e";
         Region barFill = new Region();
-        String color = prob > 0.5 ? "#ef4444" : prob > 0.3 ? "#f59e0b" : "#22c55e";
         barFill.setStyle(String.format(
-            "-fx-background-color: %s; -fx-background-radius: 4px; -fx-min-height: 6px; -fx-max-height: 6px;", color));
-        barFill.setPrefWidth(0);
+            "-fx-background-color: %s; -fx-background-radius: 4px; -fx-min-height: 8px; -fx-pref-height: 8px; -fx-max-height: 8px;", barColor));
+        barFill.setPrefWidth(pct * 180);
+        barFill.setMinWidth(pct * 180);
         barFill.setMaxWidth(Double.MAX_VALUE);
 
-        javafx.animation.Timeline tl = new javafx.animation.Timeline(
-            new javafx.animation.KeyFrame(
-                javafx.util.Duration.millis(800),
-                new javafx.animation.KeyValue(barFill.prefWidthProperty(), prob * 400)
-            )
-        );
-        tl.play();
+        Region barBg = new Region();
+        barBg.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 4px; -fx-min-height: 8px; -fx-pref-height: 8px; -fx-max-height: 8px;");
+        barBg.setPrefWidth(180);
+        barBg.setMinWidth(180);
+        barBg.setMaxWidth(Double.MAX_VALUE);
 
-        HBox barBox = new HBox(barFill);
-        barBox.setPrefHeight(6);
-        barBox.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 4px;");
-        HBox.setHgrow(barBox, Priority.ALWAYS);
+        StackPane barPane = new StackPane(barBg, barFill);
+        barPane.setAlignment(Pos.CENTER_LEFT);
+        barPane.setMaxWidth(Double.MAX_VALUE);
 
-        card.getChildren().addAll(top, barBox);
+        card.getChildren().addAll(ic, lbl, val, barPane);
         return card;
     }
 
@@ -1177,6 +1201,8 @@ public class UnifiedDashboardController extends BaseController {
                             showLoading(false);
                         });
                     } catch (Exception ex) {
+                        java.util.logging.Logger.getLogger(getClass().getName())
+                            .warning("Eroare evoluție buton (" + days + " zile): " + ex.getMessage());
                         Platform.runLater(() -> {
                             renderEvolution(new ArrayList<>(), start, end);
                             showLoading(false);
