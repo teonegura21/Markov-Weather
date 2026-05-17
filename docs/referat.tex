@@ -172,20 +172,18 @@ Aplicatia urmeaza o arhitectura pe trei straturi:
 \centering
 \fbox{\parbox{0.9\textwidth}{
 \centering
-\textbf{Flux de date simplificat}\\[0.3cm]
-Open-Meteo API $\rightarrow$ \texttt{WeatherImporterService} (Java) \\
-$\rightarrow$ INSERT/UPDATE in \texttt{forecasts} (PostgreSQL) \\
-$\rightarrow$ Trigger \texttt{trg\_forecasts\_updated\_at} \\
-$\rightarrow$ Proceduri ML: \texttt{sp\_build\_weather\_vector} $\rightarrow$ \texttt{sp\_compute\_recipe\_scores} \\
-$\rightarrow$ \texttt{sp\_run\_monte\_carlo} (predictii P10/P50/P90) \\
-$\rightarrow$ JavaFX citeste rezultatele finale prin JDBC
+\vspace{0.5cm}
+\textbf{[Inserati aici screenshot-ul din}\texttt{ prognoza-meteo-architecture.html}\textbf{]}\\[0.3cm]
+\textit{Deschideti fisierul \texttt{prognoza-meteo-architecture.html} in browser,}\\
+\textit{faceti screenshot la diagrama arhitecturala completa si inlocuiti aceasta caseta.}\\[0.3cm]
+\textbf{Nume fisier sugerat:} \texttt{screenshots/diagrama\_arhitectura.png}
+\vspace{0.5cm}
 }}
-\caption{Flux end-to-end al datelor in aplicatie}
+\caption{Diagrama arhitecturala a aplicatiei (din fisierul HTML interactiv)}
+\label{fig:arhitectura}
 \end{figure}
 
-\begin{infobox}[Diagrama arhitecturala interactiva]
-In repository-ul proiectului (\texttt{prognoza-meteo-architecture.html}) exista o diagrama arhitecturala interactiva in format HTML care prezinta vizual toate straturile aplicatiei, procedurile stocate si fluxurile de date. Aceasta poate fi deschisa in orice browser modern si ofera o perspectiva complementara diagramei statice din prezentul referat.
-\end{infobox}
+Diagrama arhitecturala interactiva (fisierul \texttt{prognoza-meteo-architecture.html} din repository) prezinta vizual cele trei straturi ale aplicatiei (JavaFX, Servicii Java/JDBC, PostgreSQL), procedurile stocate, fluxurile de date catre API-ul Open-Meteo si pipeline-ul ML. Se recomanda includerea unui screenshot fullscreen al acestei diagrame in locul casetei de mai sus.
 
 % ========== 2. CERINTE DE BUSINESS ==========
 \section{Cerinte de business identificate}
